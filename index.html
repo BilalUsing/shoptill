@@ -578,13 +578,13 @@ async function openCamera() {
   const live = () => modalKind === 'camera';
   let decode = null, cams = [], camId = null, zoom = 1, torch = false;
 
-  // pick the decoder first (Android built-in, otherwise ZXing)
+  // Readers: ZXing always; on Android also the built-in reader (which silently finds nothing on some phones,
+  // so both run together and whichever reads the barcode first wins).
   const det = await nativeDetector();
-  if (!det) {
-    try { await loadZXing(); decode = makeZxingDecoder(); }
-    catch (e) { msg('The camera scanner needs to download once while online. Connect to the internet and try again.'); return; }
-  }
+  try { await loadZXing(); decode = makeZxingDecoder(); }
+  catch (e) { if (!det) { msg('The camera scanner needs to download once while online. Connect to the internet and try again.'); return; } }
   if (!live()) return;
+  const readerName = det && decode ? 'Built-in + ZXing readers' : det ? 'Built-in reader' : 'ZXing reader';
 
   const renderTools = () => {
     const track = camStream && camStream.getVideoTracks()[0];
@@ -599,7 +599,7 @@ async function openCamera() {
     $('#camTools', b).innerHTML = h;
     // small diagnostics line - helps if scanning has problems on a particular phone
     const info = $('#camInfo', b);
-    if (info) info.textContent = `${det ? 'Built-in reader' : 'ZXing reader'} · ${vid.videoWidth || '?'}×${vid.videoHeight || '?'}${track && track.label ? ' · ' + track.label : ''}`;
+    if (info) info.textContent = `${readerName} ·${vid.videoWidth || '?'}×${vid.videoHeight || '?'}${track && track.label ? ' · ' + track.label : ''}`;
   };
   const start = async id => {
     stopCamera();
@@ -618,11 +618,11 @@ async function openCamera() {
     if (!live()) return;
     let code = null;
     try {
-      if (det) { const r = await det.detect(vid); if (r.length) code = r[0].rawValue; }
-      else code = decode(vid);
+      if (det) { try { const r = await det.detect(vid); if (r.length) code = r[0].rawValue; } catch (e) {} }
+      if (!code && decode) code = decode(vid);
     } catch (e) {}
     if (code && live()) { closeModal(); onScan(code); return; }
-    camTimer = setTimeout(loop, det ? 120 : 60);
+    camTimer = setTimeout(loop, 60);
   };
 
   b.onclick = async e => {
@@ -1285,7 +1285,7 @@ window.addEventListener('online', tick); window.addEventListener('offline', tick
 
 // offline support when served from a web address (e.g. installed on an iPad home screen)
 // When a new version arrives, reload once - but never in the middle of a sale or delivery.
-const APP_VERSION = '5';
+const APP_VERSION = '6';
 $('#appVer').textContent = APP_VERSION;
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   const hadController = !!navigator.serviceWorker.controller;
