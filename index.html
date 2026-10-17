@@ -300,6 +300,7 @@ body.refund .total-box{background:var(--bad)}
   <div class="card">
     <h2>About</h2>
     <p class="muted">Shop Till works offline. When the PC is online, unknown barcodes are looked up on Open Food Facts (a free product database) to fill in the name. Prices always come from you or your price file.</p>
+    <p class="muted">Version <b id="appVer"></b></p>
   </div>
 </section>
 </main>
@@ -1191,7 +1192,17 @@ window.addEventListener('online', tick); window.addEventListener('offline', tick
 })();
 
 // offline support when served from a web address (e.g. installed on an iPad home screen)
-if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) navigator.serviceWorker.register('sw.js').catch(() => {});
+// When a new version arrives, reload once - but never in the middle of a sale or delivery.
+const APP_VERSION = '4';
+$('#appVer').textContent = APP_VERSION;
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  const hadController = !!navigator.serviceWorker.controller;
+  let updateWaiting = false;
+  const applyUpdate = () => { if (!basket.length && !stockList.length && !modalOpen()) location.reload(); else if (!updateWaiting) { updateWaiting = true; toast('App updated. It will refresh after this sale.', 4000); } };
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) applyUpdate(); });
+  setInterval(() => { if (updateWaiting) applyUpdate(); }, 5000);
+  navigator.serviceWorker.register('sw.js').then(reg => { setInterval(() => reg.update().catch(() => {}), 30 * 60000); }).catch(() => {});
+}
 </script>
 </body>
 </html>
