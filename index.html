@@ -1,0 +1,1123 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Shop Till</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Shop Till">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#111827">
+<style>
+:root{--bg:#eef0f3;--panel:#fff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--bad:#dc2626;--key:#f8fafc;--dark:#111827}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{font:16px/1.35 "Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+input,select,textarea{font:inherit;user-select:text;-webkit-user-select:text}
+h2{margin:0 0 12px;font-size:22px}
+h3{margin:18px 0 8px;font-size:18px}
+.muted{color:var(--muted)}
+header{display:flex;align-items:center;gap:14px;padding:6px 12px;background:var(--dark);color:#fff}
+.brand{font-weight:700;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}
+nav{display:flex;gap:4px;flex:1}
+nav button{background:none;border:0;color:#cbd5e1;font:inherit;font-size:17px;padding:12px 18px;border-radius:10px;cursor:pointer}
+nav button.on{background:#374151;color:#fff}
+.status{display:flex;gap:14px;font-size:14px;color:#cbd5e1;white-space:nowrap}
+main{flex:1;min-height:0}
+.view{display:none;height:100%}
+.view.on{display:flex}
+.page{flex-direction:column;gap:12px;padding:16px;overflow:auto}
+.btn{font:inherit;font-weight:600;border:1px solid #d1d5db;background:var(--key);color:var(--ink);padding:10px 16px;border-radius:10px;cursor:pointer;min-height:50px}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.danger{color:var(--bad)}
+.btn.small{min-height:38px;padding:6px 12px;font-size:14px}
+.btn.on{background:#fee2e2;border-color:var(--bad);color:var(--bad)}
+/* till */
+#view-till,#view-stock{gap:12px;padding:12px}
+.pay.one{grid-template-columns:1fr}
+.history{flex:1;min-height:0;overflow:auto;padding:12px}
+.history h3{margin-top:0}
+.hrow{display:flex;justify-content:space-between;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.hrow:active{background:#eef2ff}
+.line .amt.plus{color:var(--ok)}
+.pick{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow:auto}
+.pick .btn{text-align:left;display:flex;justify-content:space-between;gap:10px}
+.basket-col{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.scanbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);color:var(--muted)}
+.warnbar{padding:10px 14px;background:#fef3c7;color:#78350f;font-size:15px}
+.refundbar{padding:10px 14px;background:var(--bad);color:#fff;font-weight:700;text-align:center}
+.basket{flex:1;overflow-y:auto}
+.line{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer}
+.line:active{background:#eef2ff}
+.line .nm{font-weight:600;font-size:17px}
+.line .sub{font-size:13px;color:var(--muted)}
+.line .qty{color:var(--muted);white-space:nowrap}
+.line .amt{font-weight:700;font-size:19px;min-width:96px;text-align:right;font-variant-numeric:tabular-nums}
+.line.flash{animation:flash .7s}
+@keyframes flash{from{background:#bfdbfe}to{background:transparent}}
+.empty{padding:60px 20px;text-align:center;color:var(--muted);font-size:18px}
+.basket-foot{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.side-col{width:min(440px,42%);display:flex;flex-direction:column;gap:12px}
+.total-box{background:var(--dark);color:#fff;border-radius:14px;padding:14px 20px}
+.total{font-size:58px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.total-box .muted{color:#9ca3af}
+body.refund .total-box{background:var(--bad)}
+.quick{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:78px;gap:8px;align-content:start}
+.qk{font:inherit;font-weight:600;font-size:15px;border:1px solid #c7d2fe;background:#eef2ff;color:#1e3a8a;border-radius:12px;cursor:pointer;padding:6px;line-height:1.2}
+.qk small{display:block;font-weight:400;color:#4b5563;margin-top:3px}
+.qk:active{transform:scale(.96)}
+.pay{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pay .btn{min-height:96px;font-size:28px;border:0;color:#fff}
+.pay-cash{background:var(--ok)!important}.pay-card{background:var(--accent)!important}
+/* tables / forms */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar input,.toolbar select{height:50px;padding:0 12px;border:1px solid #d1d5db;border-radius:10px;background:#fff}
+#pSearch{flex:1;min-width:220px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.tbl{width:100%;border-collapse:collapse;background:#fff}
+.tbl th,.tbl td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left}
+.tbl th{font-size:13px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);position:sticky;top:0;background:#fff}
+.tbl td.r,.tbl th.r{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:active{background:#eef2ff}
+.tag{display:inline-block;font-size:12px;padding:2px 7px;border-radius:99px;background:#e5e7eb;margin-left:6px;vertical-align:1px}
+.tag.red{background:#fee2e2;color:#991b1b}.tag.blue{background:#dbeafe;color:#1e3a8a}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:#374151;font-weight:600}
+.form .wide{grid-column:1/-1}
+.form input:not([type=checkbox]),.form select,.form textarea{height:50px;padding:0 12px;border:1px solid #d1d5db;border-radius:10px;background:#fff;font-weight:400;color:var(--ink)}
+.form textarea{height:80px;padding:10px 12px}
+.form input[readonly]{background:#f3f4f6}
+.form label.chk{flex-direction:row;align-items:center;gap:10px;font-weight:400;font-size:16px;min-height:44px}
+.chk input{width:26px;height:26px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-size:26px;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:14px}
+/* modal */
+.modal-back{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(17,24,39,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:12px}
+.modal{background:#fff;border-radius:16px;padding:20px;width:min(620px,96vw);max-height:94vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.modal.narrow{width:min(400px,96vw)}
+.modal.wide{width:min(900px,96vw)}
+.modal p.big{font-size:20px;margin:6px 0 4px}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.actions .spacer{flex:1}
+.actions .btn{min-width:120px}
+.np-display{font-size:44px;font-weight:800;text-align:right;padding:8px 14px;background:#f3f4f6;border-radius:10px;margin-bottom:10px;font-variant-numeric:tabular-nums}
+.np{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.np .btn{min-height:66px;font-size:26px}
+.np-quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;margin-bottom:10px}
+.np-quick .btn{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+.qtyrow{display:flex;align-items:center;gap:14px;justify-content:center;margin:14px 0}
+.qtyrow .btn{width:80px;height:70px;font-size:32px}
+.qtyrow b{font-size:38px;min-width:70px;text-align:center}
+.change{font-size:64px;font-weight:800;text-align:center;color:var(--ok);margin:8px 0}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--dark);color:#fff;padding:12px 20px;border-radius:10px;font-size:16px;z-index:99;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+#toast.show{opacity:1}
+.tblwrap{flex:1;min-height:200px;overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+#print{display:none}
+.cam-btn{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.cam-wrap{position:relative;background:#000;border-radius:12px;overflow:hidden;height:50vh}
+.cam-wrap video{width:100%;height:100%;object-fit:cover;display:block}
+.cam-wrap .aim{position:absolute;left:10%;right:10%;top:38%;height:24%;border:3px solid rgba(74,222,128,.9);border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.25)}
+/* iPad: scanner input lives in the header */
+#scanIn{width:150px;height:38px;border-radius:99px;border:1px solid #4b5563;background:#1f2937;color:#fca5a5;padding:0 12px;font-size:14px;caret-color:transparent}
+#scanIn:focus{outline:none;color:#86efac;border-color:#16a34a}
+#scanIn::placeholder{color:inherit}
+@media (max-width:1000px){.brand,#clock{display:none}nav button{padding:12px 12px;font-size:16px}}
+/* older Safari without flexbox gap */
+.nogap .toolbar>*,.nogap .basket-foot>*,.nogap .actions>*,.nogap nav>*,.nogap .status>*,.nogap .qtyrow>*,.nogap .scanbar>*,.nogap .hrow>*{margin:4px}
+.nogap .side-col>*{margin-bottom:12px}
+.nogap #view-till>*,.nogap #view-stock>*{margin-right:12px}
+.nogap .page>*{margin-bottom:12px}
+@media print{
+  @page{size:80mm auto;margin:3mm}
+  body{display:block;overflow:visible;background:#fff}
+  body>*:not(#print){display:none!important}
+  #print{display:block;font:12px/1.3 "Consolas","Courier New",monospace;color:#000;width:72mm}
+  #print .c{text-align:center}#print .r{text-align:right}
+  #print table{width:100%;border-collapse:collapse}
+  #print td{padding:1px 0;vertical-align:top}
+  #print hr{border:0;border-top:1px dashed #000;margin:4px 0}
+  #print .big{font-size:16px;font-weight:700}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand" id="shopName">Shop Till</div>
+  <nav>
+    <button data-view="till" class="on">Till</button>
+    <button data-view="products">Products</button>
+    <button data-view="stock">Stock In</button>
+    <button data-view="reports">Reports</button>
+    <button data-view="settings">Settings</button>
+  </nav>
+  <div class="status"><input id="scanIn" hidden inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tap to scan" aria-label="Scanner"><span id="net"></span><span id="clock"></span></div>
+</header>
+
+<main>
+<!-- TILL -->
+<section id="view-till" class="view on">
+  <div class="basket-col">
+    <div class="scanbar"><span>Ready: scan an item</span><span><button class="btn small cam-btn" data-cam hidden>📷 Camera</button> <button class="btn small" id="btnType">Type barcode</button></span></div>
+    <div class="warnbar" id="backupWarn" hidden></div>
+    <div class="refundbar" id="refundBar" hidden>REFUND MODE: items in this basket will be refunded</div>
+    <div class="basket" id="basket"></div>
+    <div class="basket-foot">
+      <button class="btn" id="btnRefund">Refund mode</button>
+      <button class="btn" id="btnReprint">Reprint last receipt</button>
+      <span style="flex:1"></span>
+      <button class="btn danger" id="btnClear">Clear sale</button>
+    </div>
+  </div>
+  <div class="side-col">
+    <div class="total-box"><div class="muted" id="totalLbl">Total</div><div class="total" id="total">£0.00</div><div class="muted" id="itemCount">0 items</div></div>
+    <div class="quick" id="quickKeys"></div>
+    <div class="pay"><button class="btn pay-cash" id="payCash">Cash</button><button class="btn pay-card" id="payCard">Card</button></div>
+  </div>
+</section>
+
+<!-- PRODUCTS -->
+<section id="view-products" class="view page">
+  <div class="toolbar">
+    <input id="pSearch" placeholder="Search name or barcode…" autocomplete="off">
+    <select id="pFilter">
+      <option value="">All products</option>
+      <option value="noprice">No price yet</option>
+      <option value="low">Low stock (3 or less)</option>
+      <option value="quick">Quick keys</option>
+      <option value="age">Age restricted</option>
+    </select>
+    <button class="btn primary" id="pAdd">+ Add product</button>
+    <button class="btn" id="pImport">Import price file (CSV)</button>
+    <input type="file" id="pImportFile" accept=".csv,.txt,.tsv" hidden>
+  </div>
+  <div class="muted">Tip: scan a barcode while on this screen to open that product, or create it if it's new.</div>
+  <div class="tblwrap"><table class="tbl"><thead><tr><th>Product</th><th>Barcode</th><th class="r">Price</th><th class="r">Stock</th></tr></thead><tbody id="pList"></tbody></table></div>
+  <div class="muted" id="pCount"></div>
+</section>
+
+<!-- STOCK IN -->
+<section id="view-stock" class="view">
+  <div class="basket-col">
+    <div class="scanbar"><span>Stock in: scan each item from your delivery</span><span><button class="btn small cam-btn" data-cam hidden>📷 Camera</button> <button class="btn small" id="siFind">Find product</button> <button class="btn small" id="siType">Type barcode</button></span></div>
+    <div class="basket" id="siList"></div>
+    <div class="basket-foot"><span class="muted" style="align-self:center">Tap an item to change the quantity (e.g. a case of 24).</span><span style="flex:1"></span><button class="btn danger" id="siClear">Clear list</button></div>
+  </div>
+  <div class="side-col">
+    <div class="total-box"><div class="muted">Units to add</div><div class="total" id="siTotal">0</div><div class="muted" id="siLines">0 products</div></div>
+    <div class="card history"><h3>Recent deliveries</h3><div id="siHistory"></div></div>
+    <div class="pay one"><button class="btn pay-cash" id="siConfirm">Add to stock</button></div>
+  </div>
+</section>
+
+<!-- REPORTS -->
+<section id="view-reports" class="view page">
+  <div class="toolbar">
+    <span>From</span><input type="date" id="rFrom"><span>to</span><input type="date" id="rTo">
+    <button class="btn" id="rToday">Today</button>
+    <button class="btn primary" id="rRun">Show</button>
+    <button class="btn" id="rPrint">Print report</button>
+    <button class="btn" id="rCsv">Export sales (CSV)</button>
+    <button class="btn" id="rEod">End of day: print + back up</button>
+  </div>
+  <div id="rOut"></div>
+</section>
+
+<!-- SETTINGS -->
+<section id="view-settings" class="view page">
+  <div class="card">
+    <h2>Shop details (shown on receipts)</h2>
+    <div class="form">
+      <label class="wide">Shop name<input id="sName"></label>
+      <label class="wide">Address / phone<textarea id="sAddr"></textarea></label>
+      <label>VAT number (optional)<input id="sVat"></label>
+      <label class="wide">Receipt footer<input id="sFooter"></label>
+      <label class="chk wide"><input type="checkbox" id="sAutoPrint"> Print a receipt automatically after every sale</label>
+    </div>
+    <div class="actions"><button class="btn primary" id="sSave">Save settings</button></div>
+  </div>
+  <div class="card">
+    <h2>Backups</h2>
+    <p class="muted" id="bInfo"></p>
+    <p>All your products and sales live on this PC only. Back up to a USB stick or external drive regularly. If the PC fails without a backup, the data is gone.</p>
+    <div class="toolbar">
+      <button class="btn" id="bFolder">Choose backup folder (e.g. USB stick)</button>
+      <button class="btn primary" id="bNow">Back up now</button>
+      <button class="btn danger" id="bRestore">Restore from backup…</button>
+      <input type="file" id="bRestoreFile" accept=".json" hidden>
+    </div>
+  </div>
+  <div class="card">
+    <h2>About</h2>
+    <p class="muted">Shop Till works offline. When the PC is online, unknown barcodes are looked up on Open Food Facts (a free product database) to fill in the name. Prices always come from you or your price file.</p>
+  </div>
+</section>
+</main>
+
+<div class="modal-back" id="modal" hidden><div class="modal" id="modalBox"></div></div>
+<div id="toast"></div>
+<div id="print"></div>
+
+<script>
+'use strict';
+// ---------- helpers ----------
+const $ = (s, r = document) => r.querySelector(s);
+// small helpers instead of ?. / ?? so the app also runs on older iPads (iOS 12+)
+const nz = (v, d) => v == null ? d : v;
+const actOf = t => { const el = t.closest('[data-a]'); return el ? el.dataset.a : undefined; };
+const scrollRow = (el, i) => { const r = el.querySelector(`[data-i="${i}"]`); if (r) r.scrollIntoView({ block: 'nearest' }); };
+const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const esc = s => String(nz(s, '')).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const gbp = p => (p < 0 ? '-' : '') + '£' + (Math.abs(p || 0) / 100).toFixed(2);
+const toPence = v => { if (v == null || String(v).trim() === '') return null; const n = parseFloat(String(v).replace(/[£,\s]/g, '')); return isNaN(n) ? null : Math.round(n * 100); };
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const dt = ts => { const d = new Date(ts); return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const VAT = { S: { label: 'Standard 20%', rate: 20 }, R: { label: 'Reduced 5%', rate: 5 }, Z: { label: 'Zero 0%', rate: 0 }, E: { label: 'Exempt', rate: 0 } };
+const vatOf = (gross, code) => { const r = (VAT[code] || VAT.S).rate; return Math.round(gross * r / (100 + r)); };
+const isNum = v => typeof v === 'number' && !isNaN(v);
+
+function toast(msg, ms = 2600) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), ms); }
+let actx;
+function beep(freq = 1400, dur = 0.07) { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = freq; g.gain.value = 0.08; o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + dur); } catch (e) {} }
+
+// best guess at age-restricted items; staff should still check
+const AGE18 = /\b(beer|lager|ale|stout|cider|wine|prosecco|champagne|vodka|gin|rum|whisk(e)?y|brandy|tequila|liqueur|spirit|alcohol|smirnoff|stella|carling|fosters|budweiser|corona|heineken|strongbow|kopparberg|guinness|cigarette|cigar|tobacco|rolling|rizla|vape|e-?liquid|nicotine|lighter refill|butane|knife|blade|razor|lottery|scratchcard)\b/i;
+const guessAge = (...txt) => AGE18.test(txt.join(' ')) ? 18 : 0;
+
+// ---------- database (IndexedDB, stored on this PC) ----------
+let db;
+function openDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('shoptill', 2);
+    r.onupgradeneeded = e => {
+      const d = r.result;
+      if (e.oldVersion < 1) {
+        d.createObjectStore('products', { keyPath: 'barcode' });
+        d.createObjectStore('sales', { keyPath: 'id', autoIncrement: true }).createIndex('ts', 'ts');
+        d.createObjectStore('settings');
+        d.createObjectStore('handles');
+      }
+      if (e.oldVersion < 2) d.createObjectStore('stockins', { keyPath: 'id', autoIncrement: true });
+    };
+    r.onsuccess = () => res(db = r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+const req = r => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+const os = (name, mode = 'readonly') => db.transaction(name, mode).objectStore(name);
+const dbGet = (s, k) => req(os(s).get(k));
+const dbPut = (s, v, k) => req(k === undefined ? os(s, 'readwrite').put(v) : os(s, 'readwrite').put(v, k));
+const dbDel = (s, k) => req(os(s, 'readwrite').delete(k));
+const dbAll = (s, q) => req(os(s).getAll(q));
+const txDone = tx => new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = tx.onabort = () => rej(tx.error); });
+
+let cfg = {};
+const DEFAULT_CFG = { shopName: 'My Shop', address: '', vatNo: '', footer: 'Thank you for shopping with us!', autoPrint: false, lastBackup: null, lastAutoBackup: 0, seeded: false };
+async function loadCfg() { cfg = Object.assign({}, DEFAULT_CFG, (await dbGet('settings', 'cfg')) || {}); }
+async function saveCfg() { await dbPut('settings', cfg, 'cfg'); $('#shopName').textContent = cfg.shopName; }
+
+async function seed() {
+  if (cfg.seeded) return;
+  const now = Date.now();
+  const quick = [
+    { barcode: 'QK-BAG', name: 'Carrier bag', price: 10, vat: 'S' },
+    { barcode: 'QK-MISC20', name: 'Misc item (20% VAT)', price: 0, vat: 'S', open: true },
+    { barcode: 'QK-MISC0', name: 'Misc item (0% VAT)', price: 0, vat: 'Z', open: true },
+    { barcode: 'QK-NEWS', name: 'Newspaper / magazine', price: 0, vat: 'Z', open: true },
+  ];
+  for (const q of quick) await dbPut('products', Object.assign({ stock: null, age: 0, pmp: false, quick: true, open: false, updated: now }, q));
+  cfg.seeded = true; await saveCfg();
+}
+
+async function findProduct(code) {
+  let p = await dbGet('products', code);
+  if (!p && /^\d{12}$/.test(code)) p = await dbGet('products', '0' + code);   // UPC-A vs EAN-13
+  if (!p && /^0\d{12}$/.test(code)) p = await dbGet('products', code.slice(1));
+  return p || null;
+}
+
+// ---------- Open Food Facts lookup (only when online) ----------
+async function lookupOFF(code) {
+  if (!navigator.onLine) return { status: 'offline' };
+  const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 6000);
+  try {
+    const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,product_name_en,brands,quantity,categories`, { signal: ctl.signal });
+    const j = await r.json();
+    if (j.status !== 1 || !j.product) return { status: 'notfound' };
+    const p = j.product, base = (p.product_name_en || p.product_name || '').trim();
+    const brand = (p.brands || '').split(',')[0].trim();
+    let name = base;
+    const brandWord = brand.split(/\s+/)[0].toLowerCase();
+    if (brand && !base.toLowerCase().includes(brandWord)) name = `${brand} ${base}`;
+    if (p.quantity && !name.toLowerCase().replace(/\s/g, '').includes(p.quantity.toLowerCase().replace(/\s/g, ''))) name += ` ${p.quantity}`;
+    name = name.trim();
+    if (!name) return { status: 'notfound' };
+    const cats = (p.categories || '').split(',').map(c => c.trim()).filter(c => c && !/^[a-z]{2}:/.test(c));
+    return { status: 'found', name, categories: cats.slice(-2).join(', '), allCats: cats.join(' ') };
+  } catch (e) { return { status: 'error' }; }
+  finally { clearTimeout(timer); }
+}
+
+// ---------- modals ----------
+let modalKind = '';
+function openModal(html, cls = '', kind = '') { const b = $('#modalBox'); b.className = 'modal ' + cls; b.innerHTML = html; b.onclick = null; $('#modal').hidden = false; modalKind = kind; return b; }
+function closeModal() {
+  if (modalKind === 'camera') stopCamera();
+  $('#modal').hidden = true; $('#modalBox').innerHTML = ''; modalKind = '';
+  focusScanner();
+}
+const modalOpen = () => !$('#modal').hidden;
+
+function ask(msgHtml, { yes = 'Yes', no = 'Cancel', danger = false, title = '' } = {}) {
+  return new Promise(res => {
+    const b = openModal(`${title ? `<h2>${esc(title)}</h2>` : ''}<p class="big">${msgHtml}</p>
+      <div class="actions">${no ? `<button class="btn" data-a="no">${esc(no)}</button>` : ''}<button class="btn ${danger ? 'bad' : 'primary'}" data-a="yes">${esc(yes)}</button></div>`, 'narrow');
+    b.onclick = e => { const a = actOf(e.target); if (!a) return; closeModal(); res(a === 'yes'); };
+  });
+}
+
+function textPrompt(title, { placeholder = '', numeric = false } = {}) {
+  return new Promise(res => {
+    const b = openModal(`<h2>${esc(title)}</h2><div class="form"><label class="wide"><input id="tpIn" placeholder="${esc(placeholder)}" ${numeric ? 'inputmode="numeric"' : ''} autocomplete="off"></label></div>
+      <div class="actions"><button class="btn" data-a="no">Cancel</button><button class="btn primary" data-a="ok">OK</button></div>`, 'narrow');
+    const inp = $('#tpIn', b); inp.focus();
+    const done = v => { closeModal(); res(v); };
+    inp.onkeydown = e => { if (e.key === 'Enter') done(inp.value.trim()); if (e.key === 'Escape') done(null); };
+    b.onclick = e => { const a = actOf(e.target); if (a === 'ok') done(inp.value.trim()); if (a === 'no') done(null); };
+  });
+}
+
+// on-screen keypad. Money mode: typing 1,2,5 gives £1.25 (like a cash register). count: true gives whole numbers.
+function numpad(title, { initial = 0, hint = '', quick = [], okLabel = 'OK', count = false } = {}) {
+  return new Promise(res => {
+    let v = initial || 0;
+    const b = openModal(`<h2>${esc(title)}</h2>${hint ? `<p class="muted">${hint}</p>` : ''}
+      <div class="np-display" id="npd"></div>
+      ${quick.length ? `<div class="np-quick">${quick.map(q => `<button class="btn" data-q="${q.v}">${esc(q.label)}</button>`).join('')}</div>` : ''}
+      <div class="np">${['7','8','9','4','5','6','1','2','3','00','0','⌫'].map(k => `<button class="btn" data-k="${k}">${k}</button>`).join('')}</div>
+      <div class="actions"><button class="btn" data-a="no">Cancel</button><button class="btn primary" data-a="ok">${esc(okLabel)}</button></div>`, 'narrow', 'numpad');
+    const show = () => $('#npd', b).textContent = count ? v : gbp(v);
+    const press = k => { if (k === '⌫') v = Math.floor(v / 10); else if (k === '00') v *= 100; else v = v * 10 + +k; if (v > 99999999) v = 99999999; show(); };
+    const done = r => { document.removeEventListener('keydown', kd, true); closeModal(); res(r); };
+    const kd = e => {
+      if (/^\d$/.test(e.key)) press(e.key); else if (e.key === 'Backspace') press('⌫');
+      else if (e.key === 'Enter') done(v); else if (e.key === 'Escape') done(null); else return;
+      e.preventDefault(); e.stopPropagation();
+    };
+    document.addEventListener('keydown', kd, true);
+    show();
+    b.onclick = e => {
+      const t = e.target.closest('button'); if (!t) return;
+      if (t.dataset.k) press(t.dataset.k); else if (t.dataset.q) { if (count) { v = +t.dataset.q; show(); } else done(+t.dataset.q); }
+      else if (t.dataset.a === 'ok') done(v); else if (t.dataset.a === 'no') done(null);
+    };
+  });
+}
+
+// ---------- barcode scanner (keyboard wedge: types digits then Enter) ----------
+let scanBuf = '', lastKey = 0;
+document.addEventListener('keydown', e => {
+  const t = e.target;
+  if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+  const now = Date.now(); if (now - lastKey > 1500) scanBuf = ''; lastKey = now;
+  if (e.key === 'Enter') { const c = scanBuf.trim(); scanBuf = ''; if (c.length >= 3) { e.preventDefault(); onScan(c); } return; }
+  if (e.key.length === 1) scanBuf += e.key;
+});
+
+// iPad: a hardware scanner only types into a focused field, so keep a scanner field focused.
+// inputmode="none" stops the on-screen keyboard popping up.
+const scanIn = $('#scanIn');
+function focusScanner() { if (IOS && !modalOpen()) { try { scanIn.focus({ preventScroll: true }); } catch (e) {} } }
+if (IOS) {
+  scanIn.hidden = false;
+  scanIn.addEventListener('focus', () => { scanIn.placeholder = 'Scanner ready'; });
+  scanIn.addEventListener('blur', () => { scanIn.placeholder = 'Tap to scan'; });
+  scanIn.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault(); const c = scanIn.value.trim(); scanIn.value = '';
+    if (c.length >= 3) onScan(c);
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('input,select,textarea,#modal')) focusScanner(); });
+  document.addEventListener('touchstart', () => {}, { passive: true }); // enables :active styles on iOS
+}
+
+// ---------- camera barcode scanning (ZXing, open source) ----------
+const ZXING_URL = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+let camReader = null;
+function loadZXing() {
+  if (window.ZXing) return Promise.resolve();
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = ZXING_URL; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+}
+function stopCamera() { if (camReader) { try { camReader.reset(); } catch (e) {} camReader = null; } }
+async function openCamera() {
+  if (modalOpen()) return;
+  const b = openModal(`<h2>Scan with camera</h2>
+    <div class="cam-wrap"><video id="camVid" playsinline muted autoplay></video><div class="aim"></div></div>
+    <p class="muted" id="camMsg" style="text-align:center">Starting camera…</p>
+    <div class="actions"><button class="btn" data-a="close">Close</button></div>`, '', 'camera');
+  b.onclick = e => { if (actOf(e.target) === 'close') closeModal(); };
+  try { await loadZXing(); }
+  catch (e) { $('#camMsg', b).textContent = 'The camera scanner needs to download once while online. Connect to the internet and try again.'; return; }
+  if (modalKind !== 'camera') return;
+  const Z = window.ZXing, hints = new Map();
+  hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E, Z.BarcodeFormat.CODE_128]);
+  hints.set(Z.DecodeHintType.TRY_HARDER, true);
+  camReader = new Z.BrowserMultiFormatReader(hints, 200);
+  let done = false;
+  try {
+    await camReader.decodeFromConstraints({ audio: false, video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } }, $('#camVid', b), result => {
+      if (!result || done) return;
+      done = true;
+      const code = result.getText();
+      closeModal();
+      onScan(code);
+    });
+    $('#camMsg', b).textContent = 'Hold the barcode inside the green box';
+  } catch (e) {
+    $('#camMsg', b).textContent = e && e.name === 'NotAllowedError'
+      ? 'Camera permission was refused. Allow camera access for this app in the iPad Settings, then try again.'
+      : 'Could not start the camera on this device.';
+  }
+}
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && location.protocol !== 'file:') {
+  document.querySelectorAll('[data-cam]').forEach(btn => { btn.hidden = false; btn.onclick = openCamera; });
+}
+
+async function onScan(code) {
+  if (modalOpen()) {
+    if (modalKind === 'done') closeModal();
+    else { beep(300, 0.15); toast('Finish or close the open window first'); return; }
+  }
+  if (view === 'till') return scanToBasket(code);
+  if (view === 'products') { await openProductEditor(code); loadProducts(); return; }
+  if (view === 'stock') return stockScan(code);
+  setView('till'); scanToBasket(code);
+}
+
+// ---------- till ----------
+let basket = [], refundMode = false, ageOk = 0, lastSale = null, quickList = [];
+
+async function scanToBasket(code) {
+  let p = await findProduct(code);
+  if (!p) {
+    beep(500, 0.18);
+    p = await openProductEditor(code, { fromTill: true });
+    if (!p) return;
+  }
+  await addProduct(p);
+}
+
+async function addProduct(p) {
+  if (p.age && p.age > ageOk) {
+    const ok = await ask(`<b>${esc(p.name)}</b> is <b>${p.age}+</b>.<br><br>Challenge 25: if the customer looks under 25, ask for ID. Is the customer ${p.age} or over?`, { title: 'Age check', yes: `Yes, ${p.age} or over`, no: 'No, refuse sale' });
+    if (!ok) { toast('Item not added (age check refused)'); return; }
+    ageOk = p.age;
+  }
+  let price = p.price;
+  if (p.open) {
+    price = await numpad(`Price: ${p.name}`);
+    if (!price) return;
+  } else if (!price) {
+    price = await numpad(`No price set for ${p.name}`, { hint: 'Enter the selling price. It will be saved for next time.', okLabel: 'Save price' });
+    if (!price) return;
+    p.price = price; p.updated = Date.now(); await dbPut('products', p);
+  }
+  let i = basket.findIndex(l => l.barcode === p.barcode && l.unit === price);
+  if (i >= 0) basket[i].qty++;
+  else { basket.push({ barcode: p.barcode, name: p.name, unit: price, qty: 1, vat: p.vat || 'S', age: p.age || 0 }); i = basket.length - 1; }
+  beep();
+  renderBasket(i);
+}
+
+const basketTotal = () => basket.reduce((s, l) => s + l.qty * l.unit, 0);
+
+function renderBasket(flashIdx = -1) {
+  const el = $('#basket'), sign = refundMode ? -1 : 1;
+  el.innerHTML = basket.length ? basket.map((l, i) => `
+    <div class="line${i === flashIdx ? ' flash' : ''}" data-i="${i}">
+      <div><div class="nm">${esc(l.name)}</div><div class="sub">${l.barcode.startsWith('QK-') ? 'Quick key' : esc(l.barcode)} · VAT ${l.vat}${l.age ? ` · ${l.age}+` : ''}</div></div>
+      <div class="qty">${l.qty} × ${gbp(l.unit)}</div>
+      <div class="amt">${gbp(sign * l.qty * l.unit)}</div>
+    </div>`).join('') : `<div class="empty">Scan a barcode to start a sale<br><small>or tap a quick key on the right</small></div>`;
+  if (flashIdx >= 0) scrollRow(el, flashIdx);
+  const n = basket.reduce((s, l) => s + l.qty, 0);
+  $('#total').textContent = gbp(sign * basketTotal());
+  $('#itemCount').textContent = `${n} item${n === 1 ? '' : 's'}`;
+  $('#totalLbl').textContent = refundMode ? 'Refund total' : 'Total';
+  $('#refundBar').hidden = !refundMode;
+  $('#btnRefund').classList.toggle('on', refundMode);
+  document.body.classList.toggle('refund', refundMode);
+  $('#payCash').textContent = refundMode ? 'Refund cash' : 'Cash';
+  $('#payCard').textContent = refundMode ? 'Refund card' : 'Card';
+}
+
+$('#basket').onclick = e => {
+  const row = e.target.closest('.line'); if (!row) return;
+  const i = +row.dataset.i, l = basket[i];
+  const b = openModal(`<h2>${esc(l.name)}</h2><p class="muted">${gbp(l.unit)} each</p>
+    <div class="qtyrow"><button class="btn" data-a="minus">−</button><b id="lq">${l.qty}</b><button class="btn" data-a="plus">+</button></div>
+    <div class="actions"><button class="btn danger" data-a="remove">Remove item</button><button class="btn" data-a="price">Change price</button><span class="spacer"></span><button class="btn primary" data-a="done">Done</button></div>`, 'narrow');
+  b.onclick = async ev => {
+    const a = actOf(ev.target); if (!a) return;
+    if (a === 'plus') l.qty++;
+    if (a === 'minus' && l.qty > 1) l.qty--;
+    $('#lq', b) && ($('#lq', b).textContent = l.qty);
+    if (a === 'remove') { basket.splice(i, 1); closeModal(); }
+    if (a === 'done') closeModal();
+    if (a === 'price') { closeModal(); const v = await numpad(`New price: ${l.name}`, { initial: l.unit }); if (v) l.unit = v; }
+    renderBasket();
+  };
+};
+
+function renderQuick() {
+  $('#quickKeys').innerHTML = quickList.map(p => `<button class="qk" data-b="${esc(p.barcode)}">${esc(p.name)}<small>${p.open ? 'enter price' : gbp(p.price)}</small></button>`).join('');
+}
+async function refreshQuick() { quickList = (await dbAll('products')).filter(p => p.quick).sort((a, b) => a.name.localeCompare(b.name)); renderQuick(); }
+$('#quickKeys').onclick = e => { const b = e.target.closest('.qk'); if (!b) return; const p = quickList.find(q => q.barcode === b.dataset.b); if (p) addProduct(p); };
+
+$('#btnType').onclick = async () => { const c = await textPrompt('Type barcode', { numeric: true, placeholder: 'e.g. 5000112548167' }); if (c) onScan(c); };
+$('#btnRefund').onclick = () => { refundMode = !refundMode; renderBasket(); };
+$('#btnClear').onclick = async () => { if (!basket.length) { refundMode = false; renderBasket(); return; } if (await ask('Clear this sale?', { yes: 'Clear', danger: true })) { basket = []; refundMode = false; ageOk = 0; renderBasket(); } };
+$('#btnReprint').onclick = () => lastSale ? printReceipt(lastSale) : toast('No sale yet this session');
+
+$('#payCash').onclick = async () => {
+  if (!basket.length) return toast('Basket is empty');
+  const total = basketTotal();
+  if (refundMode) { if (await ask(`Give the customer <b>${gbp(total)}</b> cash from the drawer.`, { title: 'Cash refund', yes: 'Done' })) completeSale('cash', -total); return; }
+  const notes = [500, 1000, 2000, 5000].filter(n => n > total);
+  const quick = [{ v: total, label: 'Exact' }, ...notes.slice(0, 3).map(n => ({ v: n, label: gbp(n) }))];
+  for (;;) {
+    const t = await numpad(`Cash: total ${gbp(total)}`, { hint: 'Tap the note given, or type the amount', quick, okLabel: 'Take cash' });
+    if (t == null) return;
+    const given = t || total;
+    if (given < total) { toast(`Not enough: ${gbp(total - given)} short`); continue; }
+    return completeSale('cash', given);
+  }
+};
+$('#payCard').onclick = async () => {
+  if (!basket.length) return toast('Basket is empty');
+  const total = basketTotal();
+  const ok = refundMode
+    ? await ask(`Refund <b>${gbp(total)}</b> to the customer's card on the card terminal.`, { title: 'Card refund', yes: 'Refund done' })
+    : await ask(`Take <b>${gbp(total)}</b> on the card terminal.<br><br>Was the payment approved?`, { title: 'Card payment', yes: 'Approved', no: 'Cancel' });
+  if (ok) completeSale('card', refundMode ? -total : total);
+};
+
+async function completeSale(method, tendered) {
+  const sign = refundMode ? -1 : 1, total = sign * basketTotal();
+  const sale = {
+    ts: Date.now(), refund: refundMode, method,
+    items: basket.map(l => ({ barcode: l.barcode, name: l.name, qty: sign * l.qty, unit: l.unit, vat: l.vat })),
+    total, tendered, change: method === 'cash' && !refundMode ? tendered - total : 0,
+  };
+  const qtyBy = {}; for (const it of sale.items) qtyBy[it.barcode] = (qtyBy[it.barcode] || 0) + it.qty;
+  const tx = db.transaction(['sales', 'products'], 'readwrite');
+  const add = tx.objectStore('sales').add(sale); add.onsuccess = () => { sale.id = add.result; };
+  const ps = tx.objectStore('products');
+  for (const [bc, q] of Object.entries(qtyBy)) {
+    const g = ps.get(bc);
+    g.onsuccess = () => { const p = g.result; if (p && isNum(p.stock)) { p.stock -= q; ps.put(p); } };
+  }
+  await txDone(tx);
+  lastSale = sale; basket = []; refundMode = false; ageOk = 0; renderBasket();
+  if (cfg.autoPrint) printReceipt(sale);
+  const b = openModal(`<h2>${sale.refund ? 'Refund complete' : 'Sale complete'}</h2>
+    ${method === 'cash' && !sale.refund ? `<p class="muted" style="text-align:center">Change to give</p><div class="change">${gbp(sale.change)}</div>` : `<div class="change">${gbp(Math.abs(total))}</div><p class="muted" style="text-align:center">${method === 'card' ? 'Card' : 'Cash'}${sale.refund ? ' refund' : ''}</p>`}
+    <div class="actions"><button class="btn" data-a="print">Print receipt</button><button class="btn primary" data-a="ok">Next customer</button></div>
+    <p class="muted" style="text-align:center;margin-bottom:0">You can just scan the next item.</p>`, 'narrow', 'done');
+  b.onclick = e => { const a = actOf(e.target); if (a === 'print') printReceipt(sale); if (a) closeModal(); };
+  autoBackupQuiet();
+}
+
+// ---------- receipts / printing ----------
+function vatSummary(items) {
+  const by = {};
+  for (const it of items) by[it.vat] = (by[it.vat] || 0) + it.qty * it.unit;
+  return Object.entries(by).map(([code, gross]) => ({ code, gross, vat: vatOf(gross, code), net: gross - vatOf(gross, code) }));
+}
+function printHtml(html) { $('#print').innerHTML = html; setTimeout(() => window.print(), 50); }
+function printReceipt(s) {
+  const rows = s.items.map(it => `<tr><td>${Math.abs(it.qty) > 1 ? Math.abs(it.qty) + ' x ' : ''}${esc(it.name)}</td><td class="r">${gbp(it.qty * it.unit)} ${it.vat}</td></tr>`).join('');
+  const vs = vatSummary(s.items).filter(v => v.gross).map(v => `<tr><td>${v.code} ${VAT[v.code].label}</td><td class="r">${gbp(v.net)}</td><td class="r">${gbp(v.vat)}</td></tr>`).join('');
+  printHtml(`<div class="c big">${esc(cfg.shopName)}</div>
+    <div class="c">${esc(cfg.address).replace(/\n/g, '<br>')}</div>
+    ${cfg.vatNo ? `<div class="c">VAT No: ${esc(cfg.vatNo)}</div>` : ''}
+    <hr><div>${dt(s.ts)}<span style="float:right">No. ${nz(s.id, '')}</span></div>
+    ${s.refund ? '<div class="c big">*** REFUND ***</div>' : ''}<hr>
+    <table>${rows}</table><hr>
+    <table><tr class="big"><td>TOTAL</td><td class="r">${gbp(s.total)}</td></tr>
+    <tr><td>${s.method === 'cash' ? 'Cash' : 'Card'}</td><td class="r">${gbp(s.tendered)}</td></tr>
+    ${s.change ? `<tr><td>Change</td><td class="r">${gbp(s.change)}</td></tr>` : ''}</table><hr>
+    <table><tr><td>VAT rate</td><td class="r">Net</td><td class="r">VAT</td></tr>${vs}</table><hr>
+    <div class="c">${esc(cfg.footer)}</div><br>`);
+}
+
+// ---------- product editor ----------
+function openProductEditor(code, { fromTill = false } = {}) {
+  return new Promise(async resolve => {
+    let existing = code ? await findProduct(code) : null;
+    const isNew = !existing;
+    const p = existing ? { ...existing } : { barcode: code || '', name: '', price: null, vat: 'S', stock: null, age: 0, pmp: false, quick: false, open: false };
+    const b = openModal(`<h2>${isNew ? (code ? 'New product' : 'Add product') : 'Edit product'}</h2>
+      ${isNew && code ? '<p class="muted" id="offStatus">Looking up barcode…</p>' : ''}
+      <div class="form">
+        <label>Barcode<input id="fBarcode" inputmode="numeric" autocomplete="off" ${isNew ? '' : 'readonly'}></label>
+        <label>VAT rate<select id="fVat">${Object.entries(VAT).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select></label>
+        <label class="wide">Product name<input id="fName" autocomplete="off"></label>
+        <label>Selling price £ (inc VAT)<input id="fPrice" inputmode="decimal" autocomplete="off"></label>
+        <label>Stock count (leave blank to not track)<input id="fStock" inputmode="numeric" autocomplete="off"></label>
+        <label>Age restriction<select id="fAge"><option value="0">None</option><option value="16">16+</option><option value="18">18+ (alcohol, tobacco, vapes, knives…)</option></select></label>
+        <div></div>
+        <label class="chk"><input type="checkbox" id="fPmp"> Price-marked pack (PMP)</label>
+        <label class="chk"><input type="checkbox" id="fOpen"> Ask for price each time</label>
+        <label class="chk wide"><input type="checkbox" id="fQuick"> Show as a quick key on the till</label>
+      </div>
+      <div class="actions">${isNew ? '' : '<button class="btn danger" data-a="del">Delete</button>'}<span class="spacer"></span>
+        <button class="btn" data-a="no">Cancel</button><button class="btn primary" data-a="save">${fromTill ? 'Save & add to sale' : 'Save'}</button></div>`, 'wide', 'editor');
+    const f = id => $('#' + id, b);
+    f('fBarcode').value = p.barcode; f('fName').value = p.name; f('fVat').value = p.vat || 'S';
+    f('fPrice').value = p.price ? (p.price / 100).toFixed(2) : '';
+    f('fStock').value = isNum(p.stock) ? p.stock : '';
+    f('fAge').value = String(p.age || 0); f('fPmp').checked = !!p.pmp; f('fOpen').checked = !!p.open; f('fQuick').checked = !!p.quick;
+
+    if (isNew && code) {
+      lookupOFF(code).then(r => {
+        const st = f('offStatus'); if (!st) return;
+        if (r.status === 'found') {
+          if (!f('fName').value) f('fName').value = r.name;
+          if (guessAge(r.name, r.categories, r.allCats)) f('fAge').value = '18';
+          st.innerHTML = `Found on Open Food Facts${r.categories ? ` (<i>${esc(r.categories)}</i>)` : ''}. Check the name, choose the VAT rate and add your price.`;
+        } else {
+          st.textContent = r.status === 'offline' ? 'Offline. Please type the product name.' : 'Not found online. Please type the product name.';
+          f('fName').focus();
+        }
+      });
+    } else if (!code) f('fBarcode').focus();
+
+    const finish = r => { closeModal(); resolve(r); };
+    b.onclick = async e => {
+      const a = actOf(e.target); if (!a) return;
+      if (a === 'no') return finish(null);
+      if (a === 'del') {
+        if (!(await ask(`Delete <b>${esc(p.name)}</b>? Past sales are kept.`, { yes: 'Delete', danger: true }))) { openProductEditor(p.barcode, { fromTill }).then(resolve); return; }
+        await dbDel('products', p.barcode); await refreshQuick(); toast('Product deleted'); return resolve(null);
+      }
+      if (a === 'save') {
+        const bc = f('fBarcode').value.trim().replace(/\s+/g, ''), name = f('fName').value.trim();
+        const price = toPence(f('fPrice').value), open = f('fOpen').checked;
+        if (!bc) return toast('Barcode is required');
+        if (!name) return toast('Product name is required');
+        if (fromTill && !price && !open) return toast('Enter a selling price (or tick "Ask for price each time")');
+        if (isNew && await dbGet('products', bc)) return toast('A product with that barcode already exists');
+        const stockTxt = f('fStock').value.trim();
+        Object.assign(p, {
+          barcode: bc, name, price: price || 0, vat: f('fVat').value, open,
+          stock: stockTxt === '' ? null : parseInt(stockTxt, 10), age: +f('fAge').value, pmp: f('fPmp').checked, quick: f('fQuick').checked, updated: Date.now(),
+        });
+        await dbPut('products', p); await refreshQuick();
+        toast(`Saved: ${name}`); finish(p);
+      }
+    };
+  });
+}
+
+// ---------- products screen ----------
+let allProducts = [];
+async function loadProducts() { allProducts = (await dbAll('products')).sort((a, b) => a.name.localeCompare(b.name)); renderProducts(); }
+function renderProducts() {
+  const q = $('#pSearch').value.trim().toLowerCase(), f = $('#pFilter').value;
+  let list = allProducts.filter(p => !q || p.name.toLowerCase().includes(q) || p.barcode.includes(q));
+  if (f === 'noprice') list = list.filter(p => !p.price && !p.open);
+  if (f === 'low') list = list.filter(p => isNum(p.stock) && p.stock <= 3);
+  if (f === 'quick') list = list.filter(p => p.quick);
+  if (f === 'age') list = list.filter(p => p.age);
+  const shown = list.slice(0, 300);
+  $('#pList').innerHTML = shown.map(p => {
+    return `<tr data-b="${esc(p.barcode)}"><td>${esc(p.name)}${p.quick ? '<span class="tag blue">quick key</span>' : ''}${p.age ? `<span class="tag red">${p.age}+</span>` : ''}${p.pmp ? '<span class="tag">PMP</span>' : ''}</td>
+      <td class="muted">${esc(p.barcode)}</td><td class="r">${p.open ? 'ask' : p.price ? gbp(p.price) : '<span style="color:var(--bad)">none</span>'}</td>
+      <td class="r">${isNum(p.stock) ? p.stock : '–'}</td></tr>`;
+  }).join('') || `<tr><td colspan="4"class="muted" style="text-align:center;padding:30px">No products found</td></tr>`;
+  $('#pCount').textContent = `${list.length} product${list.length === 1 ? '' : 's'}${list.length > shown.length ? ` (showing first ${shown.length}, search to narrow down)` : ''} · ${allProducts.length} in total`;
+}
+$('#pSearch').oninput = renderProducts;
+$('#pFilter').onchange = renderProducts;
+$('#pList').onclick = async e => { const r = e.target.closest('tr[data-b]'); if (!r) return; await openProductEditor(r.dataset.b); loadProducts(); };
+$('#pAdd').onclick = async () => { await openProductEditor(''); loadProducts(); };
+
+// ---------- stock in (deliveries) ----------
+let stockList = [];
+async function stockScan(code) {
+  let p = await findProduct(code);
+  if (!p) {
+    beep(500, 0.18);
+    p = await openProductEditor(code);
+    if (!p) return;
+  }
+  stockAdd(p, 1);
+}
+function stockAdd(p, qty) {
+  let i = stockList.findIndex(l => l.barcode === p.barcode);
+  if (i >= 0) stockList[i].qty += qty;
+  else { stockList.push({ barcode: p.barcode, name: p.name, qty, current: isNum(p.stock) ? p.stock : null }); i = stockList.length - 1; }
+  beep(); renderStock(i);
+}
+function renderStock(flashIdx = -1) {
+  const el = $('#siList');
+  el.innerHTML = stockList.length ? stockList.map((l, i) => `
+    <div class="line${i === flashIdx ? ' flash' : ''}" data-i="${i}">
+      <div><div class="nm">${esc(l.name)}</div><div class="sub">${esc(l.barcode)}</div></div>
+      <div class="qty">In stock: ${nz(l.current, 0)} → <b>${nz(l.current, 0) + l.qty}</b></div>
+      <div class="amt plus">+${l.qty}</div>
+    </div>`).join('') : `<div class="empty">Scan items from your delivery<br><small>Each scan adds 1. Tap an item to enter a case quantity.</small></div>`;
+  if (flashIdx >= 0) scrollRow(el, flashIdx);
+  const units = stockList.reduce((s, l) => s + l.qty, 0);
+  $('#siTotal').textContent = units;
+  $('#siLines').textContent = `${stockList.length} product${stockList.length === 1 ? '' : 's'}`;
+}
+$('#siList').onclick = e => {
+  const row = e.target.closest('.line'); if (!row) return;
+  const i = +row.dataset.i, l = stockList[i];
+  const b = openModal(`<h2>${esc(l.name)}</h2><p class="muted">Currently in stock: ${nz(l.current, 0)}</p>
+    <div class="qtyrow"><button class="btn" data-a="minus">−</button><b id="lq">${l.qty}</b><button class="btn" data-a="plus">+</button></div>
+    <div class="np-quick">${[6, 12, 24, 48].map(n => `<button class="btn" data-set="${n}">${n}</button>`).join('')}</div>
+    <div class="actions"><button class="btn danger" data-a="remove">Remove</button><button class="btn" data-a="type">Type quantity</button><span class="spacer"></span><button class="btn primary" data-a="done">Done</button></div>`, 'narrow');
+  b.onclick = async ev => {
+    const t = ev.target.closest('button'); if (!t) return;
+    const a = t.dataset.a;
+    if (t.dataset.set) l.qty = +t.dataset.set;
+    if (a === 'plus') l.qty++;
+    if (a === 'minus' && l.qty > 1) l.qty--;
+    if ($('#lq', b)) $('#lq', b).textContent = l.qty;
+    if (a === 'remove') { stockList.splice(i, 1); closeModal(); }
+    if (a === 'done') closeModal();
+    if (a === 'type') { closeModal(); const v = await numpad(`Quantity: ${l.name}`, { initial: l.qty, count: true }); if (v) l.qty = v; }
+    renderStock();
+  };
+};
+$('#siType').onclick = async () => { const c = await textPrompt('Type barcode', { numeric: true }); if (c) stockScan(c); };
+$('#siFind').onclick = async () => {
+  const q = (await textPrompt('Find product', { placeholder: 'Type part of the name…' }) || '').toLowerCase();
+  if (!q) return;
+  const hits = (await dbAll('products')).filter(p => !p.barcode.startsWith('QK-') && (p.name.toLowerCase().includes(q) || p.barcode.includes(q))).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 30);
+  if (!hits.length) return toast('No matching products');
+  const b = openModal(`<h2>Choose product</h2><div class="pick">${hits.map(p => `<button class="btn" data-b="${esc(p.barcode)}"><span>${esc(p.name)}</span><span class="muted">stock ${isNum(p.stock) ? p.stock : 0}</span></button>`).join('')}</div>
+    <div class="actions"><button class="btn" data-a="no">Cancel</button></div>`, 'narrow');
+  b.onclick = e => { const t = e.target.closest('button'); if (!t) return; closeModal(); const p = hits.find(h => h.barcode === t.dataset.b); if (p) stockAdd(p, 1); };
+};
+$('#siClear').onclick = async () => { if (stockList.length && await ask('Clear this delivery list? Nothing will be added to stock.', { yes: 'Clear', danger: true })) { stockList = []; renderStock(); } };
+$('#siConfirm').onclick = async () => {
+  if (!stockList.length) return toast('Scan some items first');
+  const units = stockList.reduce((s, l) => s + l.qty, 0);
+  if (!(await ask(`Add <b>${units}</b> units across <b>${stockList.length}</b> products to stock?`, { title: 'Confirm delivery', yes: 'Add to stock' }))) return;
+  const rec = { ts: Date.now(), units, items: [] };
+  const tx = db.transaction(['products', 'stockins'], 'readwrite'), ps = tx.objectStore('products');
+  let pending = stockList.length;
+  for (const l of stockList) {
+    const g = ps.get(l.barcode);
+    g.onsuccess = () => {
+      const p = g.result;
+      if (p) {
+        const before = isNum(p.stock) ? p.stock : 0;
+        p.stock = before + l.qty; p.updated = rec.ts; ps.put(p);
+        rec.items.push({ barcode: l.barcode, name: p.name, qty: l.qty, before, after: p.stock });
+      }
+      if (--pending === 0) tx.objectStore('stockins').add(rec);
+    };
+  }
+  await txDone(tx);
+  stockList = []; renderStock(); renderStockHistory();
+  toast(`Stock updated: ${units} units added`);
+  autoBackupQuiet();
+};
+async function renderStockHistory() {
+  const recs = (await dbAll('stockins')).slice(-15).reverse();
+  $('#siHistory').innerHTML = recs.map(r => `<div class="hrow" data-id="${r.id}"><span>${dt(r.ts)}</span><span class="muted">${r.items.length} products · <b>+${r.units}</b></span></div>`).join('') || '<p class="muted">No deliveries yet</p>';
+}
+$('#siHistory').onclick = async e => {
+  const row = e.target.closest('.hrow'); if (!row) return;
+  const r = await dbGet('stockins', +row.dataset.id); if (!r) return;
+  const b = openModal(`<h2>Delivery ${dt(r.ts)}</h2>
+    <div style="overflow:auto;max-height:60vh"><table class="tbl"><thead><tr><th>Product</th><th class="r">Added</th><th class="r">Stock after</th></tr></thead>
+    <tbody>${r.items.map(it => `<tr><td>${esc(it.name)}</td><td class="r">+${it.qty}</td><td class="r">${it.after}</td></tr>`).join('')}</tbody></table></div>
+    <div class="actions"><button class="btn primary" data-a="ok">Close</button></div>`);
+  b.onclick = ev => { if (ev.target.closest('[data-a]')) closeModal(); };
+};
+
+// ---------- CSV price-file import ----------
+function parseCSV(text) {
+  const first = text.split(/\r?\n/)[0] || '';
+  const delim = [',', '\t', ';', '|'].sort((a, b) => first.split(b).length - first.split(a).length)[0];
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === delim) { row.push(f); f = ''; }
+    else if (c === '\n') { row.push(f); rows.push(row); row = []; f = ''; }
+    else if (c !== '\r') f += c;
+  }
+  if (f || row.length) { row.push(f); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim()));
+}
+function parseVat(v) {
+  const s = String(nz(v, '')).trim().toUpperCase(); if (!s) return null;
+  if (/^(S|STD|STANDARD|20(\.0+)?%?|T1)$/.test(s)) return 'S';
+  if (/^(R|RED|REDUCED|5(\.0+)?%?|T5)$/.test(s)) return 'R';
+  if (/^(Z|ZERO|0(\.0+)?%?|T0)$/.test(s)) return 'Z';
+  if (/^(E|EX|EXEMPT|T2)$/.test(s)) return 'E';
+  return null;
+}
+const IMPORT_FIELDS = [
+  { k: 'barcode', label: 'Barcode (EAN) *', re: /ean|barcode|upc|gtin|bar.?code/i },
+  { k: 'name', label: 'Description *', re: /desc|product.?name|^name|item/i },
+  { k: 'price', label: 'Selling price / RRP', re: /rrp|rsp|retail|sell|pmp.?price|marked|^price/i },
+  { k: 'stock', label: 'Stock count', re: /stock|on.?hand|qty|quantity/i },
+  { k: 'vat', label: 'VAT rate', re: /vat|tax/i },
+];
+$('#pImport').onclick = () => $('#pImportFile').click();
+$('#pImportFile').onchange = async e => {
+  const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+  const rows = parseCSV(await file.text());
+  if (rows.length < 2) return toast('That file looks empty');
+  const head = rows[0].map(h => h.trim()), data = rows.slice(1);
+  const map = {}, used = new Set();
+  for (const fd of IMPORT_FIELDS) { const i = head.findIndex((h, j) => !used.has(j) && fd.re.test(h)); if (i >= 0) { map[fd.k] = i; used.add(i); } }
+  const opt = i => `<option value="">— not in file —</option>` + head.map((h, j) => `<option value="${j}" ${i === j ? 'selected' : ''}>${esc(h || 'Column ' + (j + 1))}</option>`).join('');
+  const b = openModal(`<h2>Import price file</h2>
+    <p class="muted">${esc(file.name)}: ${data.length} rows. Match each item to a column in your file. If your file is Excel (.xlsx), open it in Excel and use "Save As → CSV" first.</p>
+    <div class="form">${IMPORT_FIELDS.map(fd => `<label>${fd.label}<select data-k="${fd.k}">${opt(map[fd.k])}</select></label>`).join('')}
+      <label class="chk wide"><input type="checkbox" id="iUpd" checked> Update prices and stock of products I already have</label>
+    </div>
+    <h3>Preview</h3><div style="overflow:auto"><table class="tbl" id="iPrev"></table></div>
+    <div class="actions"><button class="btn" data-a="no">Cancel</button><button class="btn primary" data-a="go">Import</button></div>`, 'wide', 'import');
+  const getMap = () => { const m = {}; b.querySelectorAll('select[data-k]').forEach(s => { if (s.value !== '') m[s.dataset.k] = +s.value; }); return m; };
+  const rowToProduct = (r, m) => {
+    const raw = String(nz(r[m.barcode], '')).trim();
+    const bc = raw.replace(/\D/g, '');
+    const vat = m.vat != null ? parseVat(r[m.vat]) : null;
+    const price = m.price != null ? toPence(r[m.price]) : null;
+    const st = m.stock != null ? parseInt(String(r[m.stock]).replace(/[^\d-]/g, ''), 10) : NaN;
+    return { raw, bc, name: String(nz(r[m.name], '')).trim(), vat, price, stock: isNaN(st) ? null : st, sci: /e\+/i.test(raw) };
+  };
+  const preview = () => {
+    const m = getMap();
+    $('#iPrev', b).innerHTML = `<tr><th>Barcode</th><th>Name</th><th class="r">Price</th><th class="r">Stock</th><th>VAT</th></tr>` +
+      data.slice(0, 6).map(r => { const x = rowToProduct(r, m);
+        return `<tr><td>${esc(x.raw)}${x.sci ? ' <span class="tag red">broken by Excel</span>' : ''}</td><td>${esc(x.name)}</td><td class="r">${x.price ? gbp(x.price) : '–'}</td><td class="r">${nz(x.stock, '–')}</td><td>${x.vat || '?'}</td></tr>`; }).join('');
+  };
+  b.addEventListener('change', preview); preview();
+  b.onclick = async ev => {
+    const a = actOf(ev.target); if (!a) return;
+    if (a === 'no') return closeModal();
+    const m = getMap();
+    if (m.barcode == null || m.name == null) return toast('Choose the barcode and description columns');
+    const upd = $('#iUpd', b).checked;
+    const existing = new Map((await dbAll('products')).map(p => [p.barcode, p]));
+    let added = 0, updated = 0, skipped = 0, broken = 0;
+    const tx = db.transaction('products', 'readwrite'), st = tx.objectStore('products'), now = Date.now();
+    for (const r of data) {
+      const x = rowToProduct(r, m);
+      if (x.sci) { broken++; continue; }
+      if (!/^\d{6,14}$/.test(x.bc) || !x.name) { skipped++; continue; }
+      const old = existing.get(x.bc);
+      if (old) {
+        if (!upd) { skipped++; continue; }
+        if (x.vat) old.vat = x.vat;
+        if (x.price) old.price = x.price;
+        if (x.stock != null) old.stock = x.stock;
+        old.updated = now; st.put(old); updated++;
+      } else {
+        const vat = x.vat || 'S';
+        st.put({ barcode: x.bc, name: x.name, price: x.price || 0, vat, stock: x.stock, age: guessAge(x.name), pmp: /\bpmp\b|price.?marked/i.test(x.name), quick: false, open: false, updated: now });
+        existing.set(x.bc, true); added++;
+      }
+    }
+    await txDone(tx);
+    closeModal(); await loadProducts(); await refreshQuick();
+    await ask(`Added <b>${added}</b> new products and updated <b>${updated}</b>.${skipped ? `<br>${skipped} rows skipped (no valid barcode or name).` : ''}${broken ? `<br><span style="color:var(--bad)">${broken} barcodes were damaged by Excel (e.g. 5.01E+12). Format that column as Number with 0 decimals and save the CSV again.</span>` : ''}<br><br>Items that look like alcohol, tobacco, vapes or knives were marked 18+ automatically. Please check them (Filter: "Age restricted") and check VAT rates.`, { title: 'Import finished', yes: 'OK', no: '' });
+  };
+};
+
+// ---------- reports ----------
+const dayStart = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d).getTime(); };
+async function salesBetween(from, to) { return req(os('sales').index('ts').getAll(IDBKeyRange.bound(dayStart(from), dayStart(to) + 86400000 - 1))); }
+let lastReport = null;
+async function runReport() {
+  const from = $('#rFrom').value, to = $('#rTo').value; if (!from || !to) return;
+  const sales = await salesBetween(from, to);
+  const r = { from, to, count: 0, gross: 0, refunds: 0, refundCount: 0, cash: 0, card: 0, items: {}, lines: [] };
+  for (const s of sales) {
+    if (s.refund) { r.refundCount++; r.refunds += s.total; } else { r.count++; r.gross += s.total; }
+    r[s.method] += s.total;
+    for (const it of s.items) { r.lines.push(it); const k = it.barcode + '|' + it.name; r.items[k] = r.items[k] || { name: it.name, qty: 0, value: 0 }; r.items[k].qty += it.qty; r.items[k].value += it.qty * it.unit; }
+  }
+  r.net = r.gross + r.refunds; r.vat = vatSummary(r.lines); r.sales = sales;
+  r.top = Object.values(r.items).sort((a, b) => b.value - a.value).slice(0, 15);
+  lastReport = r;
+  const totalVat = r.vat.reduce((s, v) => s + v.vat, 0);
+  $('#rOut').innerHTML = `
+    <div class="stats">
+      <div class="stat"><span>Net takings</span><b>${gbp(r.net)}</b></div>
+      <div class="stat"><span>Sales (${r.count})</span><b>${gbp(r.gross)}</b></div>
+      <div class="stat"><span>Refunds (${r.refundCount})</span><b>${gbp(r.refunds)}</b></div>
+      <div class="stat"><span>Cash (should be in drawer)</span><b>${gbp(r.cash)}</b></div>
+      <div class="stat"><span>Card</span><b>${gbp(r.card)}</b></div>
+      <div class="stat"><span>Average basket</span><b>${gbp(r.count ? Math.round(r.gross / r.count) : 0)}</b></div>
+    </div>
+    <h3>VAT</h3>
+    <table class="tbl"><thead><tr><th>Rate</th><th class="r">Gross</th><th class="r">Net</th><th class="r">VAT</th></tr></thead><tbody>
+      ${r.vat.map(v => `<tr><td>${VAT[v.code].label}</td><td class="r">${gbp(v.gross)}</td><td class="r">${gbp(v.net)}</td><td class="r">${gbp(v.vat)}</td></tr>`).join('')}
+      <tr><td><b>Total</b></td><td class="r"><b>${gbp(r.net)}</b></td><td class="r"><b>${gbp(r.net - totalVat)}</b></td><td class="r"><b>${gbp(totalVat)}</b></td></tr></tbody></table>
+    <h3>Best sellers</h3>
+    <table class="tbl"><thead><tr><th>Product</th><th class="r">Qty</th><th class="r">Value</th></tr></thead><tbody>
+      ${r.top.map(t => `<tr><td>${esc(t.name)}</td><td class="r">${t.qty}</td><td class="r">${gbp(t.value)}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">No sales in this period</td></tr>'}</tbody></table>`;
+}
+function printReport() {
+  const r = lastReport; if (!r) return;
+  printHtml(`<div class="c big">${esc(cfg.shopName)}</div><div class="c">SALES REPORT</div><div class="c">${r.from === r.to ? r.from : r.from + ' to ' + r.to}</div><div class="c">Printed ${dt(Date.now())}</div><hr>
+    <table><tr><td>Sales (${r.count})</td><td class="r">${gbp(r.gross)}</td></tr><tr><td>Refunds (${r.refundCount})</td><td class="r">${gbp(r.refunds)}</td></tr>
+    <tr class="big"><td>NET</td><td class="r">${gbp(r.net)}</td></tr><tr><td>Cash</td><td class="r">${gbp(r.cash)}</td></tr><tr><td>Card</td><td class="r">${gbp(r.card)}</td></tr></table><hr>
+    <table><tr><td>VAT</td><td class="r">Gross</td><td class="r">VAT</td></tr>${r.vat.map(v => `<tr><td>${v.code}</td><td class="r">${gbp(v.gross)}</td><td class="r">${gbp(v.vat)}</td></tr>`).join('')}</table><hr>
+    <div>Counted cash: ____________</div><br><div>Signed: ____________</div><br>`);
+}
+function setToday() { const t = ymd(new Date()); $('#rFrom').value = t; $('#rTo').value = t; runReport(); }
+$('#rToday').onclick = setToday;
+$('#rRun').onclick = runReport;
+$('#rPrint').onclick = printReport;
+$('#rCsv').onclick = async () => {
+  await runReport(); const r = lastReport; if (!r) return;
+  const q = v => `"${String(v).replace(/"/g, '""')}"`;
+  const out = [['Date', 'Time', 'Receipt', 'Type', 'Payment', 'Barcode', 'Product', 'Qty', 'Unit price', 'Line total', 'VAT code'].join(',')];
+  for (const s of r.sales) { const d = new Date(s.ts); for (const it of s.items) out.push([ymd(d), `${pad(d.getHours())}:${pad(d.getMinutes())}`, s.id, s.refund ? 'Refund' : 'Sale', s.method, q(it.barcode), q(it.name), it.qty, (it.unit / 100).toFixed(2), (it.qty * it.unit / 100).toFixed(2), it.vat].join(',')); }
+  download(`sales-${r.from}_to_${r.to}.csv`, out.join('\r\n'), 'text/csv');
+};
+$('#rEod').onclick = async () => { setToday(); await runReport(); printReport(); setTimeout(() => backupNow(true), 800); };
+
+// ---------- backups ----------
+function download(name, text, type = 'application/json') {
+  if (IOS) {
+    // iPad: offer the share sheet (Save to Files, AirDrop, email…). It must be opened from a tap.
+    const file = typeof File === 'function' ? new File([text], name, { type }) : null;
+    const canShare = file && navigator.canShare && navigator.canShare({ files: [file] });
+    const b = openModal(`<h2>File ready</h2><p class="big">${esc(name)}</p><p class="muted">Tap Save, then choose "Save to Files" (ideally iCloud Drive) or AirDrop it to another device.</p>
+      <div class="actions"><button class="btn" data-a="no">Cancel</button><button class="btn primary" data-a="save">Save</button></div>`, 'narrow');
+    b.onclick = e => {
+      const a = actOf(e.target); if (!a) return;
+      closeModal(); if (a !== 'save') return;
+      if (canShare) navigator.share({ files: [file], title: name }).catch(() => {});
+      else { const l = document.createElement('a'); l.href = URL.createObjectURL(new Blob([text], { type })); l.download = name; document.body.appendChild(l); l.click(); setTimeout(() => l.remove(), 2000); }
+    };
+    return;
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+}
+async function backupData() { return JSON.stringify({ app: 'shoptill', version: 1, exported: new Date().toISOString(), cfg, products: await dbAll('products'), sales: await dbAll('sales'), stockins: await dbAll('stockins') }); }
+async function writeToFolder(interactive) {
+  const h = await dbGet('handles', 'backupDir'); if (!h) return false;
+  try {
+    let perm = await h.queryPermission({ mode: 'readwrite' });
+    if (perm !== 'granted' && interactive) perm = await h.requestPermission({ mode: 'readwrite' });
+    if (perm !== 'granted') return false;
+    const name = `till-backup-${ymd(new Date())}.json`;
+    const w = await (await h.getFileHandle(name, { create: true })).createWritable();
+    await w.write(await backupData()); await w.close();
+    return name;
+  } catch (e) { return false; }
+}
+async function backupNow(interactive = true) {
+  let name = await writeToFolder(interactive);
+  if (name) { if (interactive) toast(`Backed up to your backup folder (${name})`); }
+  else if (interactive) { name = `till-backup-${ymd(new Date())}.json`; download(name, await backupData()); toast(`Backup saved to Downloads: ${name}. Copy it to a USB stick.`, 5000); }
+  else return;
+  cfg.lastBackup = Date.now(); await saveCfg(); showBackupInfo();
+}
+async function autoBackupQuiet() {
+  if (Date.now() - (cfg.lastAutoBackup || 0) < 30 * 60000) return;
+  if (await writeToFolder(false)) { cfg.lastAutoBackup = cfg.lastBackup = Date.now(); await saveCfg(); showBackupInfo(); }
+}
+async function showBackupInfo() {
+  const h = await dbGet('handles', 'backupDir');
+  $('#bInfo').textContent = `Backup folder: ${h ? h.name : 'not chosen (backups go to Downloads)'} · Last backup: ${cfg.lastBackup ? dt(cfg.lastBackup) : 'never'}`;
+  const days = cfg.lastBackup ? (Date.now() - cfg.lastBackup) / 86400000 : Infinity;
+  const w = $('#backupWarn');
+  w.hidden = days < 2;
+  w.textContent = cfg.lastBackup ? `Last backup was ${Math.floor(days)} days ago. Go to Settings → Back up now.` : 'No backup yet. Go to Settings → Back up now (ideally to a USB stick).';
+}
+$('#bFolder').onclick = async () => {
+  if (!window.showDirectoryPicker) return toast('This browser cannot pick folders. Backups will go to Downloads.');
+  try { const h = await window.showDirectoryPicker({ mode: 'readwrite' }); await dbPut('handles', h, 'backupDir'); await backupNow(true); } catch (e) {}
+};
+$('#bNow').onclick = () => backupNow(true);
+$('#bRestore').onclick = () => $('#bRestoreFile').click();
+$('#bRestoreFile').onchange = async e => {
+  const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+  let j; try { j = JSON.parse(await file.text()); } catch (err) { return toast('That is not a valid backup file'); }
+  if (j.app !== 'shoptill') return toast('That is not a Shop Till backup file');
+  if (!(await ask(`Replace <b>all</b> current products and sales with the backup from <b>${dt(j.exported)}</b> (${j.products.length} products, ${j.sales.length} sales)?`, { title: 'Restore backup', yes: 'Replace everything', danger: true }))) return;
+  const tx = db.transaction(['products', 'sales', 'stockins', 'settings'], 'readwrite');
+  tx.objectStore('products').clear(); tx.objectStore('sales').clear(); tx.objectStore('stockins').clear();
+  j.products.forEach(p => tx.objectStore('products').put(p)); j.sales.forEach(s => tx.objectStore('sales').put(s));
+  (j.stockins || []).forEach(s => tx.objectStore('stockins').put(s));
+  tx.objectStore('settings').put(Object.assign({}, DEFAULT_CFG, j.cfg, { seeded: true }), 'cfg');
+  await txDone(tx); location.reload();
+};
+
+// ---------- settings ----------
+function fillSettings() { $('#sName').value = cfg.shopName; $('#sAddr').value = cfg.address; $('#sVat').value = cfg.vatNo; $('#sFooter').value = cfg.footer; $('#sAutoPrint').checked = cfg.autoPrint; showBackupInfo(); }
+$('#sSave').onclick = async () => {
+  Object.assign(cfg, { shopName: $('#sName').value.trim() || 'My Shop', address: $('#sAddr').value.trim(), vatNo: $('#sVat').value.trim(), footer: $('#sFooter').value.trim(), autoPrint: $('#sAutoPrint').checked });
+  await saveCfg(); toast('Settings saved');
+};
+
+// ---------- navigation ----------
+let view = 'till';
+function setView(v) {
+  view = v;
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  document.querySelectorAll('.view').forEach(s => s.classList.toggle('on', s.id === 'view-' + v));
+  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+  if (v === 'products') loadProducts();
+  if (v === 'stock') { renderStock(); renderStockHistory(); }
+  if (v === 'reports' && !$('#rFrom').value) setToday();
+  if (v === 'settings') fillSettings();
+  if (v === 'till') showBackupInfo();
+}
+document.querySelector('nav').onclick = e => { const b = e.target.closest('button[data-view]'); if (b) setView(b.dataset.view); };
+
+function tick() {
+  const d = new Date();
+  $('#clock').textContent = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  $('#net').textContent = navigator.onLine ? '● Online' : '○ Offline';
+}
+window.addEventListener('online', tick); window.addEventListener('offline', tick);
+
+(async () => {
+  try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) {}
+  await openDB(); await loadCfg(); await seed();
+  $('#shopName').textContent = cfg.shopName;
+  await refreshQuick(); renderBasket(); tick(); setInterval(tick, 15000); showBackupInfo();
+  focusScanner();
+})();
+
+// older Safari: detect missing flexbox gap support and fall back to margins
+(function () {
+  const d = document.createElement('div'); d.style.cssText = 'display:flex;flex-direction:column;row-gap:1px;position:absolute';
+  d.appendChild(document.createElement('div')); d.appendChild(document.createElement('div'));
+  document.body.appendChild(d); if (d.scrollHeight !== 1) document.documentElement.classList.add('nogap'); d.remove();
+})();
+
+// offline support when served from a web address (e.g. installed on an iPad home screen)
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>

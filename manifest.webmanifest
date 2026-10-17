@@ -1,0 +1,14 @@
+{
+  "name": "Shop Till",
+  "short_name": "Shop Till",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#eef0f3",
+  "theme_color": "#111827",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
