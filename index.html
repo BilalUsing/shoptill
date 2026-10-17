@@ -131,6 +131,48 @@ body.refund .total-box{background:var(--bad)}
 #scanIn:focus{outline:none;color:#86efac;border-color:#16a34a}
 #scanIn::placeholder{color:inherit}
 @media (max-width:1000px){.brand,#clock{display:none}nav button{padding:12px 12px;font-size:16px}}
+/* phones (e.g. Galaxy Note 9): stack everything vertically */
+@media (max-width:700px){
+  header{padding:4px 6px;gap:6px}
+  nav{overflow-x:auto;gap:2px;-webkit-overflow-scrolling:touch}
+  nav button{padding:10px 10px;font-size:15px;white-space:nowrap}
+  #net{display:none}
+  #view-till,#view-stock{flex-direction:column;gap:8px;padding:8px}
+  .scanbar{padding:8px 10px}
+  .scanbar>span:first-child{display:none}
+  .scanbar>span:last-child{display:flex;gap:6px;width:100%}
+  .scanbar .btn{flex:1}
+  .warnbar{padding:6px 10px;font-size:13px}
+  .line{padding:10px 12px;gap:8px}
+  .line .nm{font-size:15px}
+  .line .qty{font-size:13px}
+  .line .amt{font-size:16px;min-width:64px}
+  .empty{padding:24px 12px;font-size:16px}
+  .basket-foot{padding:6px;gap:6px}
+  .basket-foot .btn{min-height:42px;padding:6px 10px;font-size:14px}
+  .basket-foot .muted{display:none}
+  .side-col{width:100%;flex:none;gap:8px}
+  .total-box{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;padding:8px 14px}
+  .total-box .total{font-size:38px;order:2}
+  .quick{flex:none;grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:124px;grid-auto-rows:66px;overflow-x:auto;overflow-y:hidden}
+  .qk{font-size:14px}
+  .pay .btn{min-height:64px;font-size:22px}
+  .history{flex:none;max-height:110px;padding:8px 12px}
+  .history h3{font-size:15px;margin-bottom:4px}
+  .page{padding:10px;gap:8px}
+  .toolbar input,.toolbar select{flex:1 1 100%}
+  .toolbar .btn{flex:1}
+  .tbl th,.tbl td{padding:10px 6px}
+  #view-products .tbl th:nth-child(2),#view-products .tbl td:nth-child(2){display:none}
+  .modal-back{padding:6px}
+  .modal{padding:14px;width:100%}
+  .form{grid-template-columns:1fr}
+  .np .btn{min-height:56px}
+  .np-display{font-size:36px}
+  .change{font-size:48px}
+  .actions .btn{min-width:0;flex:1}
+  .stat b{font-size:22px}
+}
 /* older Safari without flexbox gap */
 .nogap .toolbar>*,.nogap .basket-foot>*,.nogap .actions>*,.nogap nav>*,.nogap .status>*,.nogap .qtyrow>*,.nogap .scanbar>*,.nogap .hrow>*{margin:4px}
 .nogap .side-col>*{margin-bottom:12px}
@@ -457,7 +499,28 @@ function loadZXing() {
   if (window.ZXing) return Promise.resolve();
   return new Promise((res, rej) => { const s = document.createElement('script'); s.src = ZXING_URL; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
 }
-function stopCamera() { if (camReader) { try { camReader.reset(); } catch (e) {} camReader = null; } }
+let camStream = null, camTimer = null;
+function stopCamera() {
+  if (camReader) { try { camReader.reset(); } catch (e) {} camReader = null; }
+  clearTimeout(camTimer);
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+}
+const CAM_CONSTRAINTS = { audio: false, video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } };
+function camError(b, e) {
+  $('#camMsg', b).textContent = e && e.name === 'NotAllowedError'
+    ? 'Camera permission was refused. Allow camera access for this app in your device settings, then try again.'
+    : 'Could not start the camera on this device.';
+}
+// Android Chrome has a fast built-in barcode reader; use it when available.
+async function nativeDetector() {
+  if (!('BarcodeDetector' in window)) return null;
+  try {
+    const want = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'];
+    const have = await window.BarcodeDetector.getSupportedFormats();
+    const formats = want.filter(f => have.indexOf(f) >= 0);
+    return formats.length ? new window.BarcodeDetector({ formats }) : null;
+  } catch (e) { return null; }
+}
 async function openCamera() {
   if (modalOpen()) return;
   const b = openModal(`<h2>Scan with camera</h2>
@@ -465,6 +528,23 @@ async function openCamera() {
     <p class="muted" id="camMsg" style="text-align:center">Starting camera…</p>
     <div class="actions"><button class="btn" data-a="close">Close</button></div>`, '', 'camera');
   b.onclick = e => { if (actOf(e.target) === 'close') closeModal(); };
+  const found = code => { if (modalKind !== 'camera') return; closeModal(); onScan(code); };
+  const det = await nativeDetector();
+  if (det) {
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia(CAM_CONSTRAINTS);
+      if (modalKind !== 'camera') { stopCamera(); return; }
+      const vid = $('#camVid', b); vid.srcObject = camStream; await vid.play();
+      $('#camMsg', b).textContent = 'Hold the barcode inside the green box';
+      const tick = async () => {
+        if (modalKind !== 'camera') return;
+        try { const r = await det.detect(vid); if (r.length) return found(r[0].rawValue); } catch (e) {}
+        camTimer = setTimeout(tick, 120);
+      };
+      tick();
+    } catch (e) { camError(b, e); }
+    return;
+  }
   try { await loadZXing(); }
   catch (e) { $('#camMsg', b).textContent = 'The camera scanner needs to download once while online. Connect to the internet and try again.'; return; }
   if (modalKind !== 'camera') return;
@@ -474,19 +554,13 @@ async function openCamera() {
   camReader = new Z.BrowserMultiFormatReader(hints, 200);
   let done = false;
   try {
-    await camReader.decodeFromConstraints({ audio: false, video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } }, $('#camVid', b), result => {
+    await camReader.decodeFromConstraints(CAM_CONSTRAINTS, $('#camVid', b), result => {
       if (!result || done) return;
       done = true;
-      const code = result.getText();
-      closeModal();
-      onScan(code);
+      found(result.getText());
     });
     $('#camMsg', b).textContent = 'Hold the barcode inside the green box';
-  } catch (e) {
-    $('#camMsg', b).textContent = e && e.name === 'NotAllowedError'
-      ? 'Camera permission was refused. Allow camera access for this app in the iPad Settings, then try again.'
-      : 'Could not start the camera on this device.';
-  }
+  } catch (e) { camError(b, e); }
 }
 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && location.protocol !== 'file:') {
   document.querySelectorAll('[data-cam]').forEach(btn => { btn.hidden = false; btn.onclick = openCamera; });

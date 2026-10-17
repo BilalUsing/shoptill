@@ -1,5 +1,5 @@
 // Keeps Shop Till working offline. Bump VERSION when you upload a new index.html.
-const VERSION = 'shoptill-v1';
+const VERSION = 'shoptill-v2';
 const FILES = [
   './',
   './index.html',
