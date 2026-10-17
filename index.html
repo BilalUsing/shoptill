@@ -336,8 +336,10 @@ let actx;
 function beep(freq = 1400, dur = 0.07) { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = freq; g.gain.value = 0.08; o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + dur); } catch (e) {} }
 
 // best guess at age-restricted items; staff should still check
-const AGE18 = /\b(beer|lager|ale|stout|cider|wine|prosecco|champagne|vodka|gin|rum|whisk(e)?y|brandy|tequila|liqueur|spirit|alcohol|smirnoff|stella|carling|fosters|budweiser|corona|heineken|strongbow|kopparberg|guinness|cigarette|cigar|tobacco|rolling|rizla|vape|e-?liquid|nicotine|lighter refill|butane|knife|blade|razor|lottery|scratchcard)\b/i;
-const guessAge = (...txt) => AGE18.test(txt.join(' ')) ? 18 : 0;
+const AGE18 = /\b(beer|lager|ale|stout|cider|wine|prosecco|champagne|vodka|gin|rum|whisk(e)?y|brandy|tequila|liqueur|spirit|alcohol|smirnoff|stella|carling|fosters|budweiser|corona|heineken|strongbow|kopparberg|guinness|cigarette|cigar|tobacco|rolling|rizla|vape|e-?liquid|nicotine|lighter refill|butane|knife|blade|lottery|scratchcard)\b/i;
+// things that match the words above but aren't age restricted
+const NOT18 = /alcohol.?free|\b0\.0%|non.?alcoholic|\bAF\b|ginger ale|wine gums?|rum (and |& )?raisins?/i;
+const guessAge = (...txt) => { const t = txt.join(' '); return AGE18.test(t) && !NOT18.test(t) ? 18 : 0; };
 
 // ---------- database (IndexedDB, stored on this PC) ----------
 let db;
@@ -1285,7 +1287,7 @@ window.addEventListener('online', tick); window.addEventListener('offline', tick
 
 // offline support when served from a web address (e.g. installed on an iPad home screen)
 // When a new version arrives, reload once - but never in the middle of a sale or delivery.
-const APP_VERSION = '6';
+const APP_VERSION = '7';
 $('#appVer').textContent = APP_VERSION;
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   const hadController = !!navigator.serviceWorker.controller;
