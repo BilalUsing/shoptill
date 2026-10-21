@@ -11,8 +11,82 @@
 <meta name="apple-mobile-web-app-title" content="Shop Till">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#111827">
+<script>
+// apply the saved theme before the page draws (no white flash in dark mode); saved per device
+try { var t = localStorage.getItem('theme'); if (t === 'dark' || (!t && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) {}
+// display options from Settings -> Display (bold text, strong outlines), also per device
+try { if (localStorage.getItem('bold') === '1') document.documentElement.setAttribute('data-bold', ''); if (localStorage.getItem('outline') === '1') document.documentElement.setAttribute('data-outline', ''); } catch (e) {}
+</script>
 <style>
-:root{--bg:#eef0f3;--panel:#fff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--bad:#dc2626;--key:#f8fafc;--dark:#111827}
+:root{--bg:#eef0f3;--panel:#fff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#15803d;--warn:#b45309;--bad:#dc2626;--key:#f8fafc;--dark:#111827;
+  --border:#d1d5db;--soft:#f3f4f6;--hover:#eef2ff;--flash:#bfdbfe;--label:#374151;--tag:#e5e7eb;
+  --qk-bg:#eef2ff;--qk-line:#c7d2fe;--qk-ink:#1e3a8a;--qk-sub:#4b5563;
+  --green-bg:#ecfdf5;--green-line:#6ee7b7;--green-ink:#065f46;--red-bg:#fee2e2;--red-ink:#991b1b;--blue-bg:#dbeafe;--blue-ink:#1e3a8a;
+  --warn-bg:#fef3c7;--warn-ink:#78350f;color-scheme:light}
+/* dark mode (🌙 button in the header) */
+:root[data-theme="dark"]{--bg:#0e1319;--panel:#19202a;--ink:#e6e9ee;--muted:#9aa4b2;--line:#2a3340;--key:#222b37;--dark:#0a0e13;--bad:#ef4444;--ok:#16a34a;
+  --border:#3a4553;--soft:#222b37;--hover:#243049;--flash:#1e3a6b;--label:#cbd5e1;--tag:#2a3340;
+  --qk-bg:#1c2740;--qk-line:#334571;--qk-ink:#c7d2fe;--qk-sub:#9aa4b2;
+  --green-bg:#10281d;--green-line:#1f5a3c;--green-ink:#86efac;--red-bg:#3a1515;--red-ink:#fca5a5;--blue-bg:#1c2740;--blue-ink:#bfdbfe;
+  --warn-bg:#3a2a0a;--warn-ink:#fcd34d;color-scheme:dark}
+/* Settings -> Display: bold text (thicker, higher-contrast writing) */
+:root[data-bold] body{font-weight:600}
+:root[data-bold] .form input:not([type=checkbox]),:root[data-bold] .form select,:root[data-bold] .form textarea,:root[data-bold] .form label.chk,
+:root[data-bold] .qk small,:root[data-bold] .toolbar input,:root[data-bold] .toolbar select{font-weight:600}
+.price{font-weight:700;color:var(--ink)}
+.qk small .price{color:var(--qk-ink);font-size:14px}
+:root[data-bold] .price,:root[data-bold] .line .amt,:root[data-bold] .total,:root[data-bold] .stat b,:root[data-bold] .change,:root[data-bold] .np-display,:root[data-bold] .tbl td.r,:root[data-bold] .modal h2{font-weight:900}
+:root[data-bold] .btn,:root[data-bold] .qk,:root[data-bold] nav button,:root[data-bold] .line .nm,:root[data-bold] th{font-weight:800}
+:root[data-bold]{--muted:#374151}
+:root[data-bold][data-theme="dark"]{--muted:#d1d5db}
+/* Settings -> Display: strong outlines (thicker, darker borders) */
+:root[data-outline]{--border:#4b5563;--line:#9ca3af}
+:root[data-outline][data-theme="dark"]{--border:#9aa4b2;--line:#5b6676}
+:root[data-outline] .btn,:root[data-outline] .qk,:root[data-outline] .tillpad,:root[data-outline] .tp-keys button,:root[data-outline] .tp-actions button,:root[data-outline] .stepper button,:root[data-outline] .line .del,:root[data-outline] .card,
+:root[data-outline] .basket-col,:root[data-outline] .tblwrap,:root[data-outline] .stat,:root[data-outline] .modal,
+:root[data-outline] .form input:not([type=checkbox]),:root[data-outline] .form select,:root[data-outline] .form textarea,
+:root[data-outline] .toolbar input,:root[data-outline] .toolbar select{border-width:2px;border-style:solid;border-color:var(--border)}
+:root[data-outline] .qk.add{border-style:dashed}
+:root[data-outline] .line,:root[data-outline] .tbl td,:root[data-outline] .tbl th,:root[data-outline] .scanbar,:root[data-outline] .basket-foot{border-color:var(--line);border-width:0 0 2px}
+:root[data-outline] .basket-foot{border-width:2px 0 0}
+:root[data-outline] .pay .btn{outline:3px solid var(--ink);outline-offset:-3px}
+/* the total box is dark, so a dark frame would vanish: white inner ring + outer ring in the text colour */
+:root[data-outline] .total-box{outline:none;box-shadow:inset 0 0 0 3px rgba(255,255,255,.92),0 0 0 3px var(--ink)!important}
+:root[data-outline] .total{text-shadow:-2px -2px 0 #000,0 -2px 0 #000,2px -2px 0 #000,2px 0 0 #000,2px 2px 0 #000,0 2px 0 #000,-2px 2px 0 #000,-2px 0 0 #000,0 4px 8px rgba(0,0,0,.5)}
+:root[data-outline] .btn.primary{border-color:var(--ink)}
+/* solid dark outline around the "Cash" / "Card" lettering (8 shadows = an even edge all round, works on older iPads too) */
+:root[data-outline] .pay .pay-lbl{text-shadow:-2px -2px 0 #0b1220,0 -2px 0 #0b1220,2px -2px 0 #0b1220,2px 0 0 #0b1220,2px 2px 0 #0b1220,0 2px 0 #0b1220,-2px 2px 0 #0b1220,-2px 0 0 #0b1220,0 4px 6px rgba(0,0,0,.35)}
+/* header button: dark mode */
+.hbtn{font:inherit;font-size:14px;font-weight:600;border:1px solid #374151;background:#1f2937;color:#e5e7eb;border-radius:99px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+/* Cash / Card buttons: coloured gradient, faded picture behind, small picture next to the word */
+.pay .btn{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:14px;letter-spacing:.02em;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+.pay-cash{background:linear-gradient(135deg,#22c55e 0%,#15803d 60%,#166534 100%)!important}
+.pay-card{background:linear-gradient(135deg,#60a5fa 0%,#2563eb 55%,#1e40af 100%)!important}
+.pay .pay-bg{position:absolute;right:-18px;bottom:-22px;width:150px;height:110px;opacity:.16;transform:rotate(-14deg);pointer-events:none}
+.pay .pay-ic{width:62px;height:44px;flex:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.25))}
+.pay .pay-lbl{position:relative;font-weight:800;white-space:nowrap;text-shadow:0 1px 0 rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.35)}
+body.refund .pay .pay-lbl{font-size:.78em}
+body.refund .pay-cash,body.refund .pay-card{background:linear-gradient(135deg,#f87171,#b91c1c)!important}
+/* small polish */
+.ready{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--ok)}
+.ready i{width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(22,163,74,.6);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(22,163,74,.55)}70%{box-shadow:0 0 0 8px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
+.empty svg{display:block;margin:0 auto 14px;width:120px;height:70px;color:var(--border)}
+.total-box{background:linear-gradient(160deg,#1f2937,#111827)!important;box-shadow:0 6px 16px rgba(0,0,0,.15)}
+[data-theme="dark"] .total-box{background:linear-gradient(160deg,#1b2431,#0d1218)!important}
+body.refund .total-box{background:linear-gradient(160deg,#ef4444,#991b1b)!important}
+.total-top{display:flex;justify-content:space-between;align-items:baseline}
+.bwarn{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:var(--warn-bg);color:var(--warn-ink);font-weight:600;margin:0 0 12px}
+/* basket line: name | − qty + | amount | ✕ */
+#basket .line{grid-template-columns:1fr auto auto auto}
+.stepper{display:flex;align-items:center;gap:4px}
+.stepper button,.line .del{font:inherit;font-size:22px;font-weight:700;width:44px;height:44px;border-radius:10px;border:1px solid var(--border);background:var(--key);color:var(--ink);cursor:pointer;line-height:1}
+.stepper b{min-width:30px;text-align:center;font-size:18px}
+.line .del{color:var(--bad);font-size:18px}
+.lowstock{color:var(--bad);font-weight:700}
+.qk.add{background:transparent;border-style:dashed;color:var(--muted)}
+[data-theme="dark"] .total-box{border:1px solid var(--line)}
+.qk .qn{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
@@ -31,36 +105,36 @@ main{flex:1;min-height:0}
 .view{display:none;height:100%}
 .view.on{display:flex}
 .page{flex-direction:column;gap:12px;padding:16px;overflow:auto}
-.btn{font:inherit;font-weight:600;border:1px solid #d1d5db;background:var(--key);color:var(--ink);padding:10px 16px;border-radius:10px;cursor:pointer;min-height:50px}
+.btn{font:inherit;font-weight:600;border:1px solid var(--border);background:var(--key);color:var(--ink);padding:10px 16px;border-radius:10px;cursor:pointer;min-height:50px}
 .btn:active{transform:scale(.97)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .btn.bad{background:var(--bad);border-color:var(--bad);color:#fff}
 .btn.danger{color:var(--bad)}
 .btn.small{min-height:38px;padding:6px 12px;font-size:14px}
-.btn.on{background:#fee2e2;border-color:var(--bad);color:var(--bad)}
+.btn.on{background:var(--red-bg);border-color:var(--bad);color:var(--bad)}
 /* till */
 #view-till,#view-stock{gap:12px;padding:12px}
 .pay.one{grid-template-columns:1fr}
 .history{flex:1;min-height:0;overflow:auto;padding:12px}
 .history h3{margin-top:0}
 .hrow{display:flex;justify-content:space-between;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer}
-.hrow:active{background:#eef2ff}
+.hrow:active{background:var(--hover)}
 .line .amt.plus{color:var(--ok)}
 .pick{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow:auto}
 .pick .btn{text-align:left;display:flex;justify-content:space-between;gap:10px}
 .basket-col{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .scanbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);color:var(--muted)}
-.warnbar{padding:10px 14px;background:#fef3c7;color:#78350f;font-size:15px}
+.warnbar{padding:10px 14px;background:var(--warn-bg);color:var(--warn-ink);font-size:15px}
 .refundbar{padding:10px 14px;background:var(--bad);color:#fff;font-weight:700;text-align:center}
 .basket{flex:1;overflow-y:auto}
 .line{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer}
-.line:active{background:#eef2ff}
+.line:active{background:var(--hover)}
 .line .nm{font-weight:600;font-size:17px}
 .line .sub{font-size:13px;color:var(--muted)}
 .line .qty{color:var(--muted);white-space:nowrap}
 .line .amt{font-weight:700;font-size:19px;min-width:96px;text-align:right;font-variant-numeric:tabular-nums}
 .line.flash{animation:flash .7s}
-@keyframes flash{from{background:#bfdbfe}to{background:transparent}}
+@keyframes flash{from{background:var(--flash)}to{background:transparent}}
 .empty{padding:60px 20px;text-align:center;color:var(--muted);font-size:18px}
 .basket-foot{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
 .side-col{width:min(440px,42%);display:flex;flex-direction:column;gap:12px}
@@ -68,65 +142,84 @@ main{flex:1;min-height:0}
 .total{font-size:58px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
 .total-box .muted{color:#9ca3af}
 body.refund .total-box{background:var(--bad)}
-.quick{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:78px;gap:8px;align-content:start}
-.qk{font:inherit;font-weight:600;font-size:15px;border:1px solid #c7d2fe;background:#eef2ff;color:#1e3a8a;border-radius:12px;cursor:pointer;padding:6px;line-height:1.2}
-.qk small{display:block;font-weight:400;color:#4b5563;margin-top:3px}
+.quick{flex:1;min-height:80px;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:80px;gap:8px;align-content:start}
+/* Till keypad for items without a barcode */
+.tillpad{flex:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.tp-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:0 4px}
+.tp-display{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums}
+.tp-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tp-keys button,.tp-actions button{font:inherit;font-size:22px;font-weight:700;min-height:46px;border-radius:10px;border:1px solid var(--border);background:var(--key);color:var(--ink);cursor:pointer}
+.tp-keys button:active,.tp-actions button:active{transform:scale(.96)}
+.tp-actions{display:grid;grid-template-columns:1fr 3fr;gap:6px}
+.tp-actions .btn.primary{font-size:18px;background:var(--accent);border-color:var(--accent);color:#fff}
+.tp-actions .btn.primary:disabled{opacity:.45;cursor:default}
+.tp-open{display:none}
+.basket-foot .btn{white-space:nowrap}
+@media (max-width:1100px){.basket-foot .btn{padding:8px 10px;font-size:15px}}
+/* shorter screens (e.g. 1366x768 all-in-one, iPad landscape): quick keys become one row you swipe sideways,
+   so no tile is ever shown cut in half; the keypad keeps its full size */
+@media (min-width:701px) and (max-height:860px){
+  .quick{flex:none;min-height:0;grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:calc((100% - 16px) / 3);grid-auto-rows:78px;overflow-x:auto;overflow-y:hidden}
+  .pay{margin-top:auto}
+}
+.qk{font:inherit;font-weight:600;font-size:16px;border:1px solid var(--qk-line);background:var(--qk-bg);color:var(--qk-ink);border-radius:12px;cursor:pointer;padding:6px;line-height:1.2}
+.qk small{display:block;font-weight:400;color:var(--qk-sub);margin-top:3px}
 .qk:active{transform:scale(.96)}
 .pay{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .pay .btn{min-height:96px;font-size:28px;border:0;color:#fff}
-.pay-cash{background:var(--ok)!important}.pay-card{background:var(--accent)!important}
+
 /* tables / forms */
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.toolbar input,.toolbar select{height:50px;padding:0 12px;border:1px solid #d1d5db;border-radius:10px;background:#fff}
+.toolbar input,.toolbar select{height:50px;padding:0 12px;border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--ink)}
 #pSearch{flex:1;min-width:220px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
-.tbl{width:100%;border-collapse:collapse;background:#fff}
+.tbl{width:100%;border-collapse:collapse;background:var(--panel)}
 .tbl th,.tbl td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left}
-.tbl th{font-size:13px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);position:sticky;top:0;background:#fff}
+.tbl th{font-size:13px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);position:sticky;top:0;background:var(--panel)}
 .tbl td.r,.tbl th.r{text-align:right;font-variant-numeric:tabular-nums}
 .tbl tbody tr{cursor:pointer}
-.tbl tbody tr:active{background:#eef2ff}
-.tag{display:inline-block;font-size:12px;padding:2px 7px;border-radius:99px;background:#e5e7eb;margin-left:6px;vertical-align:1px}
-.tag.red{background:#fee2e2;color:#991b1b}.tag.blue{background:#dbeafe;color:#1e3a8a}
+.tbl tbody tr:active{background:var(--hover)}
+.tag{display:inline-block;font-size:12px;padding:2px 7px;border-radius:99px;background:var(--tag);margin-left:6px;vertical-align:1px}
+.tag.red{background:var(--red-bg);color:var(--red-ink)}.tag.blue{background:var(--blue-bg);color:var(--blue-ink)}
 .form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.form label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:#374151;font-weight:600}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--label);font-weight:600}
 .form .wide{grid-column:1/-1}
-.form input:not([type=checkbox]),.form select,.form textarea{height:50px;padding:0 12px;border:1px solid #d1d5db;border-radius:10px;background:#fff;font-weight:400;color:var(--ink)}
+.form input:not([type=checkbox]),.form select,.form textarea{height:50px;padding:0 12px;border:1px solid var(--border);border-radius:10px;background:var(--panel);font-weight:400;color:var(--ink)}
 .form textarea{height:80px;padding:10px 12px}
-.form input[readonly]{background:#f3f4f6}
+.form input[readonly]{background:var(--soft)}
 .form label.chk{flex-direction:row;align-items:center;gap:10px;font-weight:400;font-size:16px;min-height:44px}
 .chk input{width:26px;height:26px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .stat b{display:block;font-size:26px;font-variant-numeric:tabular-nums}
 .stat span{color:var(--muted);font-size:14px}
 /* modal */
 .modal-back{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(17,24,39,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:12px}
-.modal{background:#fff;border-radius:16px;padding:20px;width:min(620px,96vw);max-height:94vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.modal{background:var(--panel);border-radius:16px;padding:20px;width:min(620px,96vw);max-height:94vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)}
 .modal.narrow{width:min(400px,96vw)}
 .modal.wide{width:min(900px,96vw)}
 .modal p.big{font-size:20px;margin:6px 0 4px}
 .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
 .actions .spacer{flex:1}
 .actions .btn{min-width:120px}
-.np-display{font-size:44px;font-weight:800;text-align:right;padding:8px 14px;background:#f3f4f6;border-radius:10px;margin-bottom:10px;font-variant-numeric:tabular-nums}
+.np-display{font-size:44px;font-weight:800;text-align:right;padding:8px 14px;background:var(--soft);border-radius:10px;margin-bottom:10px;font-variant-numeric:tabular-nums}
 .np{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .np .btn{min-height:66px;font-size:26px}
 .np-quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;margin-bottom:10px}
-.np-quick .btn{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+.np-quick .btn{background:var(--green-bg);border-color:var(--green-line);color:var(--green-ink)}
 .qtyrow{display:flex;align-items:center;gap:14px;justify-content:center;margin:14px 0}
 .qtyrow .btn{width:80px;height:70px;font-size:32px}
 .qtyrow b{font-size:38px;min-width:70px;text-align:center}
 .change{font-size:64px;font-weight:800;text-align:center;color:var(--ok);margin:8px 0}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--dark);color:#fff;padding:12px 20px;border-radius:10px;font-size:16px;z-index:99;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
 #toast.show{opacity:1}
-.tblwrap{flex:1;min-height:200px;overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+.tblwrap{flex:1;min-height:200px;overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
 #print{display:none}
-.cam-btn{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.cam-btn{background:var(--green-bg);border-color:var(--green-line);color:var(--green-ink)}
 .cam-wrap{position:relative;background:#000;border-radius:12px;overflow:hidden;height:50vh}
 .cam-wrap video{width:100%;height:100%;object-fit:cover;display:block}
 .cam-tools{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px}
-.cam-tools .on-cam{background:#dcfce7;border-color:#16a34a;color:#14532d}
+.cam-tools .on-cam{background:var(--green-bg);border-color:var(--ok);color:var(--green-ink)}
 .cam-info{font-size:11px;color:var(--muted);text-align:center;margin:0}
 .cam-wrap .aim{position:absolute;left:10%;right:10%;top:30%;height:40%;border:3px solid rgba(74,222,128,.9);border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.25)}
 /* iPad: scanner input lives in the header */
@@ -143,28 +236,43 @@ body.refund .total-box{background:var(--bad)}
   #view-till,#view-stock{flex-direction:column;gap:8px;padding:8px}
   .scanbar{padding:8px 10px}
   .scanbar>span:first-child{display:none}
-  .scanbar>span:last-child{display:flex;gap:6px;width:100%}
-  .scanbar .btn{flex:1}
+  .scanbar>span:last-child{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+  /* buttons size to their label (never squeezed onto two lines) and move to a new row if there isn't room */
+  .scanbar .btn{flex:1 1 auto;white-space:nowrap}
   .warnbar{padding:6px 10px;font-size:13px}
   .line{padding:10px 12px;gap:8px}
   .line .nm{font-size:15px}
   .line .qty{font-size:13px}
   .line .amt{font-size:16px;min-width:64px}
+  .stepper button,.line .del{width:36px;height:36px;font-size:18px}
+  .stepper b{min-width:22px;font-size:16px}
+  .hbtn{padding:6px 9px;font-size:13px}
+  .total-top{flex-direction:column;gap:2px}
+  .pay .pay-ic{width:36px;height:26px}
+  .pay .pay-bg{width:100px;height:74px;bottom:-14px}
+  .empty svg{width:90px;height:52px}
+  nav button{display:flex;flex-direction:column;align-items:center;padding:4px 7px;font-size:11px;line-height:1.1;gap:1px}
+  nav .ni{font-size:19px}
+  .qk .qn{-webkit-line-clamp:2}
   .empty{padding:24px 12px;font-size:16px}
   .basket-foot{padding:6px;gap:6px}
-  .basket-foot .btn{min-height:42px;padding:6px 10px;font-size:14px}
+  .basket-foot{flex-wrap:wrap}
+  .basket-foot .btn{min-height:42px;padding:6px 10px;font-size:14px;flex:1 1 auto}
+  .basket-foot>span{display:none}
   .basket-foot .muted{display:none}
   .side-col{width:100%;flex:none;gap:8px}
   .total-box{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;padding:8px 14px}
   .total-box .total{font-size:38px;order:2}
   .quick{flex:none;grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:124px;grid-auto-rows:66px;overflow-x:auto;overflow-y:hidden}
   .qk{font-size:14px}
+  .tillpad{display:none}
+  .tp-open{display:block;min-height:46px}
   .pay .btn{min-height:64px;font-size:22px}
   .history{flex:none;max-height:110px;padding:8px 12px}
   .history h3{font-size:15px;margin-bottom:4px}
   .page{padding:10px;gap:8px}
   .toolbar input,.toolbar select{flex:1 1 100%}
-  .toolbar .btn{flex:1}
+  .toolbar .btn{flex:1 1 auto;white-space:nowrap}
   .tbl th,.tbl td{padding:10px 6px}
   #view-products .tbl th:nth-child(2),#view-products .tbl td:nth-child(2){display:none}
   .modal-back{padding:6px}
@@ -173,7 +281,7 @@ body.refund .total-box{background:var(--bad)}
   .np .btn{min-height:56px}
   .np-display{font-size:36px}
   .change{font-size:48px}
-  .actions .btn{min-width:0;flex:1}
+  .actions .btn{min-width:0;flex:1 1 auto;white-space:nowrap}
   .stat b{font-size:22px}
 }
 /* older Safari without flexbox gap */
@@ -196,37 +304,70 @@ body.refund .total-box{background:var(--bad)}
 <style id="pageCss">@media print{@page{size:80mm auto;margin:3mm}}</style>
 </head>
 <body>
+<!-- pictures for the Cash / Card buttons (drawn here so they work offline) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-cash" viewBox="0 0 64 44">
+    <rect x="10" y="3" width="46" height="26" rx="3" fill="#fff" opacity=".55" transform="rotate(-8 33 16)"/>
+    <rect x="4" y="10" width="46" height="26" rx="3" fill="#fff"/>
+    <rect x="8" y="14" width="38" height="18" rx="2" fill="none" stroke="#15803d" stroke-width="1.6" opacity=".55"/>
+    <circle cx="27" cy="23" r="7.5" fill="#15803d" opacity=".18"/>
+    <text x="27" y="27.6" text-anchor="middle" font-size="13" font-weight="800" fill="#15803d" font-family="Segoe UI,Arial,sans-serif">£</text>
+    <circle cx="44" cy="37" r="6" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1.3"/>
+    <circle cx="54" cy="34" r="8" fill="#fde68a" stroke="#ca8a04" stroke-width="1.5"/>
+    <text x="54" y="37.5" text-anchor="middle" font-size="9" font-weight="800" fill="#a16207" font-family="Segoe UI,Arial,sans-serif">£</text>
+  </symbol>
+  <symbol id="i-card" viewBox="0 0 64 44">
+    <rect x="3" y="5" width="48" height="33" rx="4.5" fill="#fff"/>
+    <rect x="9" y="13" width="11" height="9" rx="2" fill="#fbbf24"/>
+    <path d="M9 17.5h11M14.5 13v9" stroke="#b45309" stroke-width=".8" opacity=".6"/>
+    <rect x="9" y="27" width="8" height="3" rx="1.5" fill="#1e40af" opacity=".45"/>
+    <rect x="19" y="27" width="8" height="3" rx="1.5" fill="#1e40af" opacity=".45"/>
+    <rect x="29" y="27" width="8" height="3" rx="1.5" fill="#1e40af" opacity=".45"/>
+    <rect x="39" y="27" width="6" height="3" rx="1.5" fill="#1e40af" opacity=".45"/>
+    <g fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M55 15.5q3.2 5 0 10"/><path d="M59.5 11.5q5.4 9 0 18"/></g>
+  </symbol>
+</svg>
 <header>
   <div class="brand" id="shopName">Shop Till</div>
   <nav>
-    <button data-view="till" class="on">Till</button>
-    <button data-view="products">Products</button>
-    <button data-view="stock">Stock In</button>
-    <button data-view="reports">Reports</button>
-    <button data-view="settings">Settings</button>
+    <button data-view="till" class="on"><span class="ni">🧾</span> <span class="nt">Till</span></button>
+    <button data-view="products"><span class="ni">📦</span> <span class="nt">Products</span></button>
+    <button data-view="stock"><span class="ni">🚚</span> <span class="nt">Stock In</span></button>
+    <button data-view="reports"><span class="ni">📊</span> <span class="nt">Reports</span></button>
+    <button data-view="settings"><span class="ni">⚙️</span> <span class="nt">Settings</span></button>
   </nav>
-  <div class="status"><input id="scanIn" hidden inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tap to scan" aria-label="Scanner"><span id="net"></span><span id="clock"></span></div>
+  <div class="status"><input id="scanIn" hidden inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tap to scan" aria-label="Scanner"><button class="hbtn" id="themeBtn" title="Dark / light mode">🌙</button><span id="net"></span><span id="clock"></span></div>
 </header>
 
 <main>
 <!-- TILL -->
 <section id="view-till" class="view on">
   <div class="basket-col">
-    <div class="scanbar"><span>Ready: scan an item</span><span><button class="btn small cam-btn" data-cam hidden>📷 Camera</button> <button class="btn small" id="btnType">Type barcode</button></span></div>
-    <div class="warnbar" id="backupWarn" hidden></div>
+    <div class="scanbar"><span class="ready"><i></i>Ready to scan</span><span><button class="btn small cam-btn" data-cam hidden>📷 Camera</button> <button class="btn small" id="btnFind">🔍 Find item</button> <button class="btn small" id="btnType">Type barcode</button></span></div>
     <div class="refundbar" id="refundBar" hidden>REFUND MODE: items in this basket will be refunded</div>
     <div class="basket" id="basket"></div>
     <div class="basket-foot">
-      <button class="btn" id="btnRefund">Refund mode</button>
-      <button class="btn" id="btnReprint">Reprint last receipt</button>
+      <button class="btn" id="btnRefund">↩ Refund</button>
+      <button class="btn" id="btnReprint">🧾 Reprint</button>
+      <button class="btn" id="btnNoSale" hidden>💷 Open drawer</button>
       <span style="flex:1"></span>
-      <button class="btn danger" id="btnClear">Clear sale</button>
+      <button class="btn danger" id="btnClear">🗑 Clear sale</button>
     </div>
   </div>
   <div class="side-col">
-    <div class="total-box"><div class="muted" id="totalLbl">Total</div><div class="total" id="total">£0.00</div><div class="muted" id="itemCount">0 items</div></div>
+    <div class="total-box"><div class="total-top muted"><span id="totalLbl">Total</span><span id="itemCount">0 items</span></div><div class="total" id="total">£0.00</div></div>
     <div class="quick" id="quickKeys"></div>
-    <div class="pay"><button class="btn pay-cash" id="payCash">Cash</button><button class="btn pay-card" id="payCard">Card</button></div>
+    <!-- keypad for items without a barcode (on phones: the button below opens it as a pop-up) -->
+    <div class="tillpad" id="tillPad">
+      <div class="tp-top"><span class="muted">Item without barcode</span><span class="tp-display" id="tpDisp">£0.00</span></div>
+      <div class="tp-keys"><button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="00">00</button><button data-k="0">0</button><button data-k="⌫" aria-label="Delete">⌫</button></div>
+      <div class="tp-actions"><button data-tp="clear" aria-label="Clear">C</button><button class="btn primary" data-tp="add" id="tpAdd" disabled>Add item</button></div>
+    </div>
+    <button class="btn tp-open" id="tpOpen">⌨ Enter amount (no barcode)</button>
+    <div class="pay">
+      <button class="btn pay-cash" id="payCash"><svg class="pay-bg" viewBox="0 0 64 44" aria-hidden="true"><use href="#i-cash" xlink:href="#i-cash"/></svg><svg class="pay-ic" viewBox="0 0 64 44" aria-hidden="true"><use href="#i-cash" xlink:href="#i-cash"/></svg><span class="pay-lbl">Cash</span></button>
+      <button class="btn pay-card" id="payCard"><svg class="pay-bg" viewBox="0 0 64 44" aria-hidden="true"><use href="#i-card" xlink:href="#i-card"/></svg><svg class="pay-ic" viewBox="0 0 64 44" aria-hidden="true"><use href="#i-card" xlink:href="#i-card"/></svg><span class="pay-lbl">Card</span></button>
+    </div>
   </div>
 </section>
 
@@ -280,13 +421,20 @@ body.refund .total-box{background:var(--bad)}
 <!-- SETTINGS -->
 <section id="view-settings" class="view page">
   <div class="card">
+    <h2>Display <span class="muted" style="font-size:15px">(this device only)</span></h2>
+    <div class="form">
+      <label class="chk wide"><input type="checkbox" id="dBold"> <span><b>Bold text</b> - thicker, darker writing that's easier to read</span></label>
+      <label class="chk wide"><input type="checkbox" id="dOutline"> <span><b>Strong outlines</b> - thick borders around buttons, boxes and fields</span></label>
+      <label class="chk wide"><input type="checkbox" id="dDark"> <span><b>Dark mode</b> - same as the 🌙 button at the top</span></label>
+    </div>
+  </div>
+  <div class="card">
     <h2>Shop details (shown on receipts)</h2>
     <div class="form">
       <label class="wide">Shop name<input id="sName"></label>
       <label class="wide">Address / phone<textarea id="sAddr"></textarea></label>
-      <label>VAT number (optional)<input id="sVat"></label>
       <label class="wide">Receipt footer<input id="sFooter"></label>
-      <label class="chk wide"><input type="checkbox" id="sAutoPrint"> Print a receipt automatically after every sale</label>
+      <label class="wide">Print receipts automatically<select id="sPrintMode"><option value="off">Off - print only when the customer wants one (tap "Print receipt")</option><option value="all">Every sale</option></select></label>
       <label>Receipt paper width<select id="sPaper"><option value="80">80 mm (most common)</option><option value="58">58 mm (narrow)</option></select></label>
       <label>Receipt text size<select id="sTextSize"><option value="normal">Normal</option><option value="large">Large</option><option value="xl">Extra large</option></select></label>
       <label class="chk wide"><input type="checkbox" id="sBold"> Bold receipt text (easier to read on thermal printers)</label>
@@ -294,7 +442,16 @@ body.refund .total-box{background:var(--bad)}
     <div class="actions"><button class="btn" id="sTest">Save &amp; print test receipt</button><button class="btn primary" id="sSave">Save settings</button></div>
   </div>
   <div class="card">
+    <h2>Cash drawer <span class="muted" style="font-size:15px">(Windows till only)</span></h2>
+    <p class="muted">For a cash drawer plugged into the receipt printer. It opens for cash sales, cash refunds and the 💷 Open drawer button - no paper is printed. Start the till with "Start Till.bat" so the drawer helper is running.</p>
+    <div class="form">
+      <label class="chk wide"><input type="checkbox" id="sDrawer"> <span><b>A cash drawer is plugged into this till's receipt printer</b></span></label>
+    </div>
+    <div class="actions"><span class="muted" id="drawerStatus" style="align-self:center"></span><span class="spacer"></span><button class="btn" id="sDrawerTest">Test drawer</button></div>
+  </div>
+  <div class="card">
     <h2>Backups</h2>
+    <div class="bwarn" id="bWarn" hidden></div>
     <p class="muted" id="bInfo"></p>
     <p>All your products and sales live on this PC only. Back up to a USB stick or external drive regularly. If the PC fails without a backup, the data is gone.</p>
     <div class="toolbar">
@@ -331,8 +488,6 @@ const toPence = v => { if (v == null || String(v).trim() === '') return null; co
 const pad = n => String(n).padStart(2, '0');
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const dt = ts => { const d = new Date(ts); return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
-const VAT = { S: { label: 'Standard 20%', rate: 20 }, R: { label: 'Reduced 5%', rate: 5 }, Z: { label: 'Zero 0%', rate: 0 }, E: { label: 'Exempt', rate: 0 } };
-const vatOf = (gross, code) => { const r = (VAT[code] || VAT.S).rate; return Math.round(gross * r / (100 + r)); };
 const isNum = v => typeof v === 'number' && !isNaN(v);
 
 function toast(msg, ms = 2600) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), ms); }
@@ -349,7 +504,7 @@ const guessAge = (...txt) => { const t = txt.join(' '); return AGE18.test(t) && 
 let db;
 function openDB() {
   return new Promise((res, rej) => {
-    const r = indexedDB.open('shoptill', 2);
+    const r = indexedDB.open('shoptill', 3);
     r.onupgradeneeded = e => {
       const d = r.result;
       if (e.oldVersion < 1) {
@@ -359,6 +514,7 @@ function openDB() {
         d.createObjectStore('handles');
       }
       if (e.oldVersion < 2) d.createObjectStore('stockins', { keyPath: 'id', autoIncrement: true });
+      if (e.oldVersion < 3) d.createObjectStore('drawer', { keyPath: 'id', autoIncrement: true }); // "no sale" drawer openings
     };
     r.onsuccess = () => res(db = r.result);
     r.onerror = () => rej(r.error);
@@ -373,21 +529,34 @@ const dbAll = (s, q) => req(os(s).getAll(q));
 const txDone = tx => new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = tx.onabort = () => rej(tx.error); });
 
 let cfg = {};
-const DEFAULT_CFG = { shopName: 'My Shop', address: '', vatNo: '', footer: 'Thank you for shopping with us!', autoPrint: false, paper: '80', textSize: 'large', boldPrint: true, lastBackup: null, lastAutoBackup: 0, seeded: false };
-async function loadCfg() { cfg = Object.assign({}, DEFAULT_CFG, (await dbGet('settings', 'cfg')) || {}); }
+const DEFAULT_CFG = { shopName: 'My Shop', address: '', footer: 'Thank you for shopping with us!', printMode: 'off', drawer: false, paper: '80', textSize: 'large', boldPrint: true, lastBackup: null, lastAutoBackup: 0, seeded: false };
+async function loadCfg() {
+  const saved = (await dbGet('settings', 'cfg')) || {};
+  cfg = Object.assign({}, DEFAULT_CFG, saved);
+  if (saved.printMode == null && saved.autoPrint) cfg.printMode = 'all'; // older versions had a simple on/off
+  if (cfg.printMode !== 'all') cfg.printMode = 'off';
+}
 async function saveCfg() { await dbPut('settings', cfg, 'cfg'); $('#shopName').textContent = cfg.shopName; }
 
 async function seed() {
+  await dropMiscQuickKeys();
   if (cfg.seeded) return;
   const now = Date.now();
   const quick = [
-    { barcode: 'QK-BAG', name: 'Carrier bag', price: 10, vat: 'S' },
-    { barcode: 'QK-MISC20', name: 'Misc item (20% VAT)', price: 0, vat: 'S', open: true },
-    { barcode: 'QK-MISC0', name: 'Misc item (0% VAT)', price: 0, vat: 'Z', open: true },
-    { barcode: 'QK-NEWS', name: 'Newspaper / magazine', price: 0, vat: 'Z', open: true },
+    { barcode: 'QK-BAG', name: 'Carrier bag', price: 10 },
+    { barcode: 'QK-NEWS', name: 'Newspaper / magazine', price: 0, open: true },
   ];
   for (const q of quick) await dbPut('products', Object.assign({ stock: null, age: 0, pmp: false, quick: true, open: false, updated: now }, q));
-  cfg.seeded = true; await saveCfg();
+  cfg.seeded = true; cfg.miscKeysGone = true; await saveCfg();
+}
+// The Till keypad replaces the old "Misc item" quick keys (including the old 20% / 0% VAT ones).
+// Only removed if they still have their original names, so anything the shop renamed is left alone.
+async function dropMiscQuickKeys() {
+  if (cfg.miscKeysGone) return;
+  const m20 = await dbGet('products', 'QK-MISC20'), m0 = await dbGet('products', 'QK-MISC0');
+  if (m20 && /^Misc item( \(20% VAT\))?$/.test(m20.name)) await dbDel('products', 'QK-MISC20');
+  if (m0 && m0.name === 'Misc item (0% VAT)') await dbDel('products', 'QK-MISC0');
+  cfg.miscKeysGone = true; await saveCfg();
 }
 
 async function findProduct(code) {
@@ -459,10 +628,22 @@ function numpad(title, { initial = 0, hint = '', quick = [], okLabel = 'OK', cou
       <div class="actions"><button class="btn" data-a="no">Cancel</button><button class="btn primary" data-a="ok">${esc(okLabel)}</button></div>`, 'narrow', 'numpad');
     const show = () => $('#npd', b).textContent = count ? v : gbp(v);
     const press = k => { if (k === '⌫') v = Math.floor(v / 10); else if (k === '00') v *= 100; else v = v * 10 + +k; if (v > 99999999) v = 99999999; show(); };
+    const disp = $('#npd', b);
     const done = r => { document.removeEventListener('keydown', kd, true); closeModal(); res(r); };
+    // A barcode scanner types digits very fast then presses Enter. If that happens while this keypad is open,
+    // ignore it (otherwise the barcode would become the cash amount). People type much slower than this.
+    let lastKey = 0, burst = 0, beforeBurst = v;
     const kd = e => {
-      if (/^\d$/.test(e.key)) press(e.key); else if (e.key === 'Backspace') press('⌫');
-      else if (e.key === 'Enter') done(v); else if (e.key === 'Escape') done(null); else return;
+      if (!disp.isConnected || $('#modal').hidden) { document.removeEventListener('keydown', kd, true); return; } // keypad already gone
+      const now = Date.now();
+      if (/^\d$/.test(e.key)) {
+        if (now - lastKey > 50) { burst = 0; beforeBurst = v; }
+        burst++; lastKey = now; press(e.key);
+      } else if (e.key === 'Enter') {
+        if (burst >= 6 && now - lastKey <= 50) { v = beforeBurst; burst = 0; show(); beep(300, 0.15); toast('Barcode scan ignored. Finish this payment first, then scan.', 3500); }
+        else done(v);
+      } else if (e.key === 'Backspace') press('⌫');
+      else if (e.key === 'Escape') done(null); else return;
       e.preventDefault(); e.stopPropagation();
     };
     document.addEventListener('keydown', kd, true);
@@ -712,7 +893,7 @@ async function addProduct(p) {
   }
   let i = basket.findIndex(l => l.barcode === p.barcode && l.unit === price);
   if (i >= 0) basket[i].qty++;
-  else { basket.push({ barcode: p.barcode, name: p.name, unit: price, qty: 1, vat: p.vat || 'S', age: p.age || 0 }); i = basket.length - 1; }
+  else { basket.push({ barcode: p.barcode, name: p.name, unit: price, qty: 1, age: p.age || 0 }); i = basket.length - 1; }
   beep();
   renderBasket(i);
 }
@@ -723,10 +904,11 @@ function renderBasket(flashIdx = -1) {
   const el = $('#basket'), sign = refundMode ? -1 : 1;
   el.innerHTML = basket.length ? basket.map((l, i) => `
     <div class="line${i === flashIdx ? ' flash' : ''}" data-i="${i}">
-      <div><div class="nm">${esc(l.name)}</div><div class="sub">${l.barcode.startsWith('QK-') ? 'Quick key' : esc(l.barcode)} · VAT ${l.vat}${l.age ? ` · ${l.age}+` : ''}</div></div>
-      <div class="qty">${l.qty} × ${gbp(l.unit)}</div>
+      <div data-a="edit"><div class="nm">${esc(l.name)}</div><div class="sub"><b class="price">${gbp(l.unit)}</b> each${l.age ? ` · ${l.age}+` : ''}</div></div>
+      <div class="stepper"><button data-a="minus" aria-label="One less">−</button><b>${l.qty}</b><button data-a="plus" aria-label="One more">+</button></div>
       <div class="amt">${gbp(sign * l.qty * l.unit)}</div>
-    </div>`).join('') : `<div class="empty">Scan a barcode to start a sale<br><small>or tap a quick key on the right</small></div>`;
+      <button class="del" data-a="del" aria-label="Remove">✕</button>
+    </div>`).join('') : `<div class="empty"><svg viewBox="0 0 120 70" aria-hidden="true"><g fill="currentColor"><rect x="8" y="6" width="4" height="50"/><rect x="16" y="6" width="2" height="50"/><rect x="22" y="6" width="6" height="50"/><rect x="32" y="6" width="2" height="50"/><rect x="38" y="6" width="4" height="50"/><rect x="46" y="6" width="2" height="50"/><rect x="52" y="6" width="6" height="50"/><rect x="62" y="6" width="2" height="50"/><rect x="68" y="6" width="4" height="50"/><rect x="76" y="6" width="2" height="50"/><rect x="82" y="6" width="6" height="50"/><rect x="92" y="6" width="2" height="50"/><rect x="98" y="6" width="4" height="50"/><rect x="106" y="6" width="6" height="50"/></g><rect x="2" y="29" width="116" height="3" rx="1.5" fill="#ef4444"/></svg>Scan a barcode to start a sale<br><small>or use 🔍 Find item, or tap a quick key</small></div>`;
   if (flashIdx >= 0) scrollRow(el, flashIdx);
   const n = basket.reduce((s, l) => s + l.qty, 0);
   $('#total').textContent = gbp(sign * basketTotal());
@@ -735,14 +917,19 @@ function renderBasket(flashIdx = -1) {
   $('#refundBar').hidden = !refundMode;
   $('#btnRefund').classList.toggle('on', refundMode);
   document.body.classList.toggle('refund', refundMode);
-  $('#payCash').textContent = refundMode ? 'Refund cash' : 'Cash';
-  $('#payCard').textContent = refundMode ? 'Refund card' : 'Card';
+  $('#payCash .pay-lbl').textContent = refundMode ? 'Refund cash' : 'Cash';
+  $('#payCard .pay-lbl').textContent = refundMode ? 'Refund card' : 'Card';
 }
 
 $('#basket').onclick = e => {
   const row = e.target.closest('.line'); if (!row) return;
-  const i = +row.dataset.i, l = basket[i];
-  const b = openModal(`<h2>${esc(l.name)}</h2><p class="muted">${gbp(l.unit)} each</p>
+  const i = +row.dataset.i, l = basket[i], act = actOf(e.target);
+  // quick buttons right on the line
+  if (act === 'plus') { l.qty++; return renderBasket(); }
+  if (act === 'minus') { if (l.qty > 1) l.qty--; return renderBasket(); }
+  if (act === 'del') { basket.splice(i, 1); return renderBasket(); }
+  // tap the name: more options (change price)
+  const b = openModal(`<h2>${esc(l.name)}</h2><p class="muted"><b class="price">${gbp(l.unit)}</b> each</p>
     <div class="qtyrow"><button class="btn" data-a="minus">−</button><b id="lq">${l.qty}</b><button class="btn" data-a="plus">+</button></div>
     <div class="actions"><button class="btn danger" data-a="remove">Remove item</button><button class="btn" data-a="price">Change price</button><span class="spacer"></span><button class="btn primary" data-a="done">Done</button></div>`, 'narrow');
   b.onclick = async ev => {
@@ -758,15 +945,100 @@ $('#basket').onclick = e => {
 };
 
 function renderQuick() {
-  $('#quickKeys').innerHTML = quickList.map(p => `<button class="qk" data-b="${esc(p.barcode)}">${esc(p.name)}<small>${p.open ? 'enter price' : gbp(p.price)}</small></button>`).join('');
+  $('#quickKeys').innerHTML = quickList.map(p => `<button class="qk" data-b="${esc(p.barcode)}"><span class="qn">${esc(p.name)}</span><small>${p.open ? 'enter price' : `<b class="price">${gbp(p.price)}</b>`}</small></button>`).join('')
+    + `<button class="qk add" data-a="addqk">+ Add quick key</button>`;
 }
 async function refreshQuick() { quickList = (await dbAll('products')).filter(p => p.quick).sort((a, b) => a.name.localeCompare(b.name)); renderQuick(); }
-$('#quickKeys').onclick = e => { const b = e.target.closest('.qk'); if (!b) return; const p = quickList.find(q => q.barcode === b.dataset.b); if (p) addProduct(p); };
+$('#quickKeys').onclick = async e => {
+  const b = e.target.closest('.qk'); if (!b) return;
+  if (b.dataset.a === 'addqk') {
+    const p = await pickProduct('Add a quick key', { includeQuick: false });
+    if (p) { p.quick = true; p.updated = Date.now(); await dbPut('products', p); await refreshQuick(); toast(`${p.name} added as a quick key. Remove it in Products.`); }
+    return;
+  }
+  const p = quickList.find(q => q.barcode === b.dataset.b); if (p) addProduct(p);
+};
+// search products by name or barcode and pick one (Till "Find item", Stock In "Find product", quick keys)
+async function pickProduct(title, { includeQuick = true } = {}) {
+  const q = (await textPrompt(title, { placeholder: 'Type part of the name or barcode…' }) || '').toLowerCase();
+  if (!q) return null;
+  const words = q.split(/\s+/).filter(Boolean);
+  const hits = (await dbAll('products'))
+    .filter(p => (includeQuick || !p.quick) && (p.barcode.includes(q) || words.every(w => p.name.toLowerCase().includes(w))))
+    .sort((a, b) => a.name.localeCompare(b.name)).slice(0, 40);
+  if (!hits.length) { toast('No matching products'); return null; }
+  return new Promise(res => {
+    const b = openModal(`<h2>Choose product</h2><div class="pick">${hits.map(p => `<button class="btn" data-b="${esc(p.barcode)}"><span>${esc(p.name)}</span><span class="muted"><b class="price">${p.open ? 'ask' : gbp(p.price)}</b> · stock ${isNum(p.stock) ? p.stock : '–'}</span></button>`).join('')}</div>
+      <div class="actions"><button class="btn" data-a="no">Cancel</button></div>`, 'narrow');
+    b.onclick = e => { const t = e.target.closest('button'); if (!t) return; closeModal(); res(hits.find(h => h.barcode === t.dataset.b) || null); };
+  });
+}
+$('#btnFind').onclick = async () => { const p = await pickProduct('Find item'); if (p) addProduct(p); };
+
+// ---------- Till keypad: items without a barcode ----------
+// Works like a cash register: 1, 2, 5 = £1.25. Added as "Misc item" (not a product, so no stock count).
+const MISC_MAX = 99999; // £999.99 - stops an accidental huge amount
+let tpVal = 0;
+function tpShow() {
+  $('#tpDisp').textContent = gbp(tpVal);
+  $('#tpAdd').textContent = tpVal ? `Add ${gbp(tpVal)} item` : 'Add item';
+  $('#tpAdd').disabled = !tpVal;
+}
+const addMisc = price => addProduct({ barcode: 'MISC', name: 'Misc item', price, open: false, age: 0 });
+$('#tillPad').onclick = async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  const k = t.dataset.k, a = t.dataset.tp;
+  if (k === '⌫') tpVal = Math.floor(tpVal / 10);
+  else if (k === '00') tpVal = Math.min(MISC_MAX, tpVal * 100);
+  else if (k) tpVal = Math.min(MISC_MAX, tpVal * 10 + +k);
+  if (a === 'clear') tpVal = 0;
+  if (a === 'add' && tpVal) { const v = tpVal; tpVal = 0; tpShow(); await addMisc(v); return; }
+  tpShow();
+};
+$('#tpOpen').onclick = async () => {
+  const v = await numpad('Item without barcode', { okLabel: 'Add item', hint: 'Type the price, e.g. 1 2 5 = <b class="price">£1.25</b>' });
+  if (v && v <= MISC_MAX) addMisc(v); else if (v) toast('That amount is too large for a single item');
+};
+tpShow();
 
 $('#btnType').onclick = async () => { const c = await textPrompt('Type barcode', { numeric: true, placeholder: 'e.g. 5000112548167' }); if (c) onScan(c); };
 $('#btnRefund').onclick = () => { refundMode = !refundMode; renderBasket(); };
 $('#btnClear').onclick = async () => { if (!basket.length) { refundMode = false; renderBasket(); return; } if (await ask('Clear this sale?', { yes: 'Clear', danger: true })) { basket = []; refundMode = false; ageOk = 0; renderBasket(); } };
 $('#btnReprint').onclick = () => lastSale ? printReceipt(lastSale) : toast('No sale yet this session');
+// ---------- cash drawer ----------
+// The drawer is plugged into the receipt printer. "drawer-helper.ps1" (started by Start Till.bat) sends the
+// printer its "open drawer" command - nothing is printed. Browsers can't do that themselves.
+const DRAWER_URL = 'http://localhost:17777';
+async function drawerCall(path, method = 'GET') {
+  const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = setTimeout(() => ctl && ctl.abort(), 2500);
+  try {
+    const r = await fetch(DRAWER_URL + path, { method, headers: method === 'POST' ? { 'X-Shop-Till': '1' } : {}, signal: ctl ? ctl.signal : undefined });
+    return await r.json();
+  } catch (e) { return { ok: false, error: 'helper not running' }; }
+  finally { clearTimeout(timer); }
+}
+async function openDrawer() {
+  if (!cfg.drawer) return false;
+  const r = await drawerCall('/open', 'POST');
+  if (!r.ok) toast(r.error === 'helper not running' ? 'Cash drawer did not open: start the till with "Start Till.bat"' : 'Cash drawer did not open: ' + r.error, 4500);
+  return r.ok;
+}
+function showDrawerButton() { $('#btnNoSale').hidden = !cfg.drawer; }
+// "No sale": open the drawer without a sale (e.g. to give change). Each opening is recorded and counted in Reports.
+$('#btnNoSale').onclick = async () => {
+  if (await openDrawer()) { await dbPut('drawer', { ts: Date.now() }); toast('Drawer opened (recorded as "no sale")'); }
+};
+$('#sDrawer').onchange = async e => { cfg.drawer = e.target.checked; await saveCfg(); showDrawerButton(); checkDrawer(); };
+$('#sDrawerTest').onclick = async () => {
+  const r = await drawerCall('/open', 'POST');
+  $('#drawerStatus').textContent = r.ok ? `✔ Drawer command sent to "${r.printer}"` : (r.error === 'helper not running' ? '✖ Drawer helper not running - start the till with "Start Till.bat"' : '✖ ' + r.error);
+};
+async function checkDrawer() {
+  if (!cfg.drawer) { $('#drawerStatus').textContent = ''; return; }
+  const r = await drawerCall('/status');
+  $('#drawerStatus').textContent = r.ok ? `Ready - printer: ${r.printer || 'none set as default'}` : '✖ Drawer helper not running - start the till with "Start Till.bat"';
+}
 
 $('#payCash').onclick = async () => {
   if (!basket.length) return toast('Basket is empty');
@@ -779,6 +1051,7 @@ $('#payCash').onclick = async () => {
     if (t == null) return;
     const given = t || total;
     if (given < total) { toast(`Not enough: ${gbp(total - given)} short`); continue; }
+    if (given - total > 10000 && !(await ask(`Cash given <b class="price">${gbp(given)}</b> for a total of <b class="price">${gbp(total)}</b>.<br><br>Change would be <b class="price">${gbp(given - total)}</b>. Is that right?`, { title: 'Check the amount', yes: 'Yes, correct', no: 'No, re-enter' }))) continue;
     return completeSale('cash', given);
   }
 };
@@ -795,7 +1068,7 @@ async function completeSale(method, tendered) {
   const sign = refundMode ? -1 : 1, total = sign * basketTotal();
   const sale = {
     ts: Date.now(), refund: refundMode, method,
-    items: basket.map(l => ({ barcode: l.barcode, name: l.name, qty: sign * l.qty, unit: l.unit, vat: l.vat })),
+    items: basket.map(l => ({ barcode: l.barcode, name: l.name, qty: sign * l.qty, unit: l.unit })),
     total, tendered, change: method === 'cash' && !refundMode ? tendered - total : 0,
   };
   const qtyBy = {}; for (const it of sale.items) qtyBy[it.barcode] = (qtyBy[it.barcode] || 0) + it.qty;
@@ -808,7 +1081,8 @@ async function completeSale(method, tendered) {
   }
   await txDone(tx);
   lastSale = sale; basket = []; refundMode = false; ageOk = 0; renderBasket();
-  if (cfg.autoPrint) printReceipt(sale);
+  if (method === 'cash') openDrawer(); // cash sale or cash refund: pop the drawer (no paper)
+  if (cfg.printMode === 'all') printReceipt(sale);
   const b = openModal(`<h2>${sale.refund ? 'Refund complete' : 'Sale complete'}</h2>
     ${method === 'cash' && !sale.refund ? `<p class="muted" style="text-align:center">Change to give</p><div class="change">${gbp(sale.change)}</div>` : `<div class="change">${gbp(Math.abs(total))}</div><p class="muted" style="text-align:center">${method === 'card' ? 'Card' : 'Cash'}${sale.refund ? ' refund' : ''}</p>`}
     <div class="actions"><button class="btn" data-a="print">Print receipt</button><button class="btn primary" data-a="ok">Next customer</button></div>
@@ -818,11 +1092,6 @@ async function completeSale(method, tendered) {
 }
 
 // ---------- receipts / printing ----------
-function vatSummary(items) {
-  const by = {};
-  for (const it of items) by[it.vat] = (by[it.vat] || 0) + it.qty * it.unit;
-  return Object.entries(by).map(([code, gross]) => ({ code, gross, vat: vatOf(gross, code), net: gross - vatOf(gross, code) }));
-}
 const RECEIPT_SIZES = { normal: 13, large: 16, xl: 19 };
 function printHtml(html) {
   const paper = cfg.paper === '58' ? 58 : 80, area = paper === 58 ? 48 : 72;
@@ -836,23 +1105,20 @@ function printHtml(html) {
 }
 function printTest() {
   printHtml(`<div class="c big">${esc(cfg.shopName)}</div><div class="c">TEST RECEIPT</div><hr>
-    <table><tr><td>2 x Coca-Cola 330ml</td><td class="r">£1.98 S</td></tr><tr><td>Mars 51g</td><td class="r">£0.85 S</td></tr></table><hr>
+    <table><tr><td>2 x Coca-Cola 330ml</td><td class="r">£1.98</td></tr><tr><td>Mars 51g</td><td class="r">£0.85</td></tr></table><hr>
     <table><tr class="big"><td>TOTAL</td><td class="r">£2.83</td></tr></table><hr>
     <div class="c">Paper ${cfg.paper === '58' ? 58 : 80} mm · text ${cfg.textSize || 'large'}${cfg.boldPrint === false ? '' : ' · bold'}</div><br>`);
 }
 function printReceipt(s) {
-  const rows = s.items.map(it => `<tr><td>${Math.abs(it.qty) > 1 ? Math.abs(it.qty) + ' x ' : ''}${esc(it.name)}</td><td class="r">${gbp(it.qty * it.unit)} ${it.vat}</td></tr>`).join('');
-  const vs = vatSummary(s.items).filter(v => v.gross).map(v => `<tr><td>${v.code} ${VAT[v.code].label}</td><td class="r">${gbp(v.net)}</td><td class="r">${gbp(v.vat)}</td></tr>`).join('');
+  const rows = s.items.map(it => `<tr><td>${Math.abs(it.qty) > 1 ? Math.abs(it.qty) + ' x ' : ''}${esc(it.name)}</td><td class="r">${gbp(it.qty * it.unit)}</td></tr>`).join('');
   printHtml(`<div class="c big">${esc(cfg.shopName)}</div>
     <div class="c">${esc(cfg.address).replace(/\n/g, '<br>')}</div>
-    ${cfg.vatNo ? `<div class="c">VAT No: ${esc(cfg.vatNo)}</div>` : ''}
     <hr><div>${dt(s.ts)}<span style="float:right">No. ${nz(s.id, '')}</span></div>
     ${s.refund ? '<div class="c big">*** REFUND ***</div>' : ''}<hr>
     <table>${rows}</table><hr>
     <table><tr class="big"><td>TOTAL</td><td class="r">${gbp(s.total)}</td></tr>
     <tr><td>${s.method === 'cash' ? 'Cash' : 'Card'}</td><td class="r">${gbp(s.tendered)}</td></tr>
     ${s.change ? `<tr><td>Change</td><td class="r">${gbp(s.change)}</td></tr>` : ''}</table><hr>
-    <table><tr><td>VAT rate</td><td class="r">Net</td><td class="r">VAT</td></tr>${vs}</table><hr>
     <div class="c">${esc(cfg.footer)}</div><br>`);
 }
 
@@ -861,17 +1127,15 @@ function openProductEditor(code, { fromTill = false } = {}) {
   return new Promise(async resolve => {
     let existing = code ? await findProduct(code) : null;
     const isNew = !existing;
-    const p = existing ? { ...existing } : { barcode: code || '', name: '', price: null, vat: 'S', stock: null, age: 0, pmp: false, quick: false, open: false };
+    const p = existing ? { ...existing } : { barcode: code || '', name: '', price: null, stock: null, age: 0, pmp: false, quick: false, open: false };
     const b = openModal(`<h2>${isNew ? (code ? 'New product' : 'Add product') : 'Edit product'}</h2>
       ${isNew && code ? '<p class="muted" id="offStatus">Looking up barcode…</p>' : ''}
       <div class="form">
         <label>Barcode<input id="fBarcode" inputmode="numeric" autocomplete="off" ${isNew ? '' : 'readonly'}></label>
-        <label>VAT rate<select id="fVat">${Object.entries(VAT).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select></label>
+        <label>Selling price £<input id="fPrice" inputmode="decimal" autocomplete="off"></label>
         <label class="wide">Product name<input id="fName" autocomplete="off"></label>
-        <label>Selling price £ (inc VAT)<input id="fPrice" inputmode="decimal" autocomplete="off"></label>
         <label>Stock count (leave blank to not track)<input id="fStock" inputmode="numeric" autocomplete="off"></label>
         <label>Age restriction<select id="fAge"><option value="0">None</option><option value="16">16+</option><option value="18">18+ (alcohol, tobacco, vapes, knives…)</option></select></label>
-        <div></div>
         <label class="chk"><input type="checkbox" id="fPmp"> Price-marked pack (PMP)</label>
         <label class="chk"><input type="checkbox" id="fOpen"> Ask for price each time</label>
         <label class="chk wide"><input type="checkbox" id="fQuick"> Show as a quick key on the till</label>
@@ -879,7 +1143,7 @@ function openProductEditor(code, { fromTill = false } = {}) {
       <div class="actions">${isNew ? '' : '<button class="btn danger" data-a="del">Delete</button>'}<span class="spacer"></span>
         <button class="btn" data-a="no">Cancel</button><button class="btn primary" data-a="save">${fromTill ? 'Save & add to sale' : 'Save'}</button></div>`, 'wide', 'editor');
     const f = id => $('#' + id, b);
-    f('fBarcode').value = p.barcode; f('fName').value = p.name; f('fVat').value = p.vat || 'S';
+    f('fBarcode').value = p.barcode; f('fName').value = p.name;
     f('fPrice').value = p.price ? (p.price / 100).toFixed(2) : '';
     f('fStock').value = isNum(p.stock) ? p.stock : '';
     f('fAge').value = String(p.age || 0); f('fPmp').checked = !!p.pmp; f('fOpen').checked = !!p.open; f('fQuick').checked = !!p.quick;
@@ -890,7 +1154,7 @@ function openProductEditor(code, { fromTill = false } = {}) {
         if (r.status === 'found') {
           if (!f('fName').value) f('fName').value = r.name;
           if (guessAge(r.name, r.categories, r.allCats)) f('fAge').value = '18';
-          st.innerHTML = `Found on Open Food Facts${r.categories ? ` (<i>${esc(r.categories)}</i>)` : ''}. Check the name, choose the VAT rate and add your price.`;
+          st.innerHTML = `Found on Open Food Facts${r.categories ? ` (<i>${esc(r.categories)}</i>)` : ''}. Check the name and add your price.`;
         } else {
           st.textContent = r.status === 'offline' ? 'Offline. Please type the product name.' : 'Not found online. Please type the product name.';
           f('fName').focus();
@@ -915,7 +1179,7 @@ function openProductEditor(code, { fromTill = false } = {}) {
         if (isNew && await dbGet('products', bc)) return toast('A product with that barcode already exists');
         const stockTxt = f('fStock').value.trim();
         Object.assign(p, {
-          barcode: bc, name, price: price || 0, vat: f('fVat').value, open,
+          barcode: bc, name, price: price || 0, open,
           stock: stockTxt === '' ? null : parseInt(stockTxt, 10), age: +f('fAge').value, pmp: f('fPmp').checked, quick: f('fQuick').checked, updated: Date.now(),
         });
         await dbPut('products', p); await refreshQuick();
@@ -938,8 +1202,8 @@ function renderProducts() {
   const shown = list.slice(0, 300);
   $('#pList').innerHTML = shown.map(p => {
     return `<tr data-b="${esc(p.barcode)}"><td>${esc(p.name)}${p.quick ? '<span class="tag blue">quick key</span>' : ''}${p.age ? `<span class="tag red">${p.age}+</span>` : ''}${p.pmp ? '<span class="tag">PMP</span>' : ''}</td>
-      <td class="muted">${esc(p.barcode)}</td><td class="r">${p.open ? 'ask' : p.price ? gbp(p.price) : '<span style="color:var(--bad)">none</span>'}</td>
-      <td class="r">${isNum(p.stock) ? p.stock : '–'}</td></tr>`;
+      <td class="muted">${esc(p.barcode)}</td><td class="r price">${p.open ? 'ask' : p.price ? gbp(p.price) : '<span style="color:var(--bad)">none</span>'}</td>
+      <td class="r${isNum(p.stock) && p.stock <= 3 ? ' lowstock' : ''}">${isNum(p.stock) ? p.stock : '–'}</td></tr>`;
   }).join('') || `<tr><td colspan="4"class="muted" style="text-align:center;padding:30px">No products found</td></tr>`;
   $('#pCount').textContent = `${list.length} product${list.length === 1 ? '' : 's'}${list.length > shown.length ? ` (showing first ${shown.length}, search to narrow down)` : ''} · ${allProducts.length} in total`;
 }
@@ -999,15 +1263,7 @@ $('#siList').onclick = e => {
   };
 };
 $('#siType').onclick = async () => { const c = await textPrompt('Type barcode', { numeric: true }); if (c) stockScan(c); };
-$('#siFind').onclick = async () => {
-  const q = (await textPrompt('Find product', { placeholder: 'Type part of the name…' }) || '').toLowerCase();
-  if (!q) return;
-  const hits = (await dbAll('products')).filter(p => !p.barcode.startsWith('QK-') && (p.name.toLowerCase().includes(q) || p.barcode.includes(q))).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 30);
-  if (!hits.length) return toast('No matching products');
-  const b = openModal(`<h2>Choose product</h2><div class="pick">${hits.map(p => `<button class="btn" data-b="${esc(p.barcode)}"><span>${esc(p.name)}</span><span class="muted">stock ${isNum(p.stock) ? p.stock : 0}</span></button>`).join('')}</div>
-    <div class="actions"><button class="btn" data-a="no">Cancel</button></div>`, 'narrow');
-  b.onclick = e => { const t = e.target.closest('button'); if (!t) return; closeModal(); const p = hits.find(h => h.barcode === t.dataset.b); if (p) stockAdd(p, 1); };
-};
+$('#siFind').onclick = async () => { const p = await pickProduct('Find product', { includeQuick: false }); if (p) stockAdd(p, 1); };
 $('#siClear').onclick = async () => { if (stockList.length && await ask('Clear this delivery list? Nothing will be added to stock.', { yes: 'Clear', danger: true })) { stockList = []; renderStock(); } };
 $('#siConfirm').onclick = async () => {
   if (!stockList.length) return toast('Scan some items first');
@@ -1063,20 +1319,11 @@ function parseCSV(text) {
   if (f || row.length) { row.push(f); rows.push(row); }
   return rows.filter(r => r.some(x => x.trim()));
 }
-function parseVat(v) {
-  const s = String(nz(v, '')).trim().toUpperCase(); if (!s) return null;
-  if (/^(S|STD|STANDARD|20(\.0+)?%?|T1)$/.test(s)) return 'S';
-  if (/^(R|RED|REDUCED|5(\.0+)?%?|T5)$/.test(s)) return 'R';
-  if (/^(Z|ZERO|0(\.0+)?%?|T0)$/.test(s)) return 'Z';
-  if (/^(E|EX|EXEMPT|T2)$/.test(s)) return 'E';
-  return null;
-}
 const IMPORT_FIELDS = [
   { k: 'barcode', label: 'Barcode (EAN) *', re: /ean|barcode|upc|gtin|bar.?code/i },
   { k: 'name', label: 'Description *', re: /desc|product.?name|^name|item/i },
   { k: 'price', label: 'Selling price / RRP', re: /rrp|rsp|retail|sell|pmp.?price|marked|^price/i },
   { k: 'stock', label: 'Stock count', re: /stock|on.?hand|qty|quantity/i },
-  { k: 'vat', label: 'VAT rate', re: /vat|tax/i },
 ];
 $('#pImport').onclick = () => $('#pImportFile').click();
 $('#pImportFile').onchange = async e => {
@@ -1098,16 +1345,15 @@ $('#pImportFile').onchange = async e => {
   const rowToProduct = (r, m) => {
     const raw = String(nz(r[m.barcode], '')).trim();
     const bc = raw.replace(/\D/g, '');
-    const vat = m.vat != null ? parseVat(r[m.vat]) : null;
     const price = m.price != null ? toPence(r[m.price]) : null;
     const st = m.stock != null ? parseInt(String(r[m.stock]).replace(/[^\d-]/g, ''), 10) : NaN;
-    return { raw, bc, name: String(nz(r[m.name], '')).trim(), vat, price, stock: isNaN(st) ? null : st, sci: /e\+/i.test(raw) };
+    return { raw, bc, name: String(nz(r[m.name], '')).trim(), price, stock: isNaN(st) ? null : st, sci: /e\+/i.test(raw) };
   };
   const preview = () => {
     const m = getMap();
-    $('#iPrev', b).innerHTML = `<tr><th>Barcode</th><th>Name</th><th class="r">Price</th><th class="r">Stock</th><th>VAT</th></tr>` +
+    $('#iPrev', b).innerHTML = `<tr><th>Barcode</th><th>Name</th><th class="r">Price</th><th class="r">Stock</th></tr>` +
       data.slice(0, 6).map(r => { const x = rowToProduct(r, m);
-        return `<tr><td>${esc(x.raw)}${x.sci ? ' <span class="tag red">broken by Excel</span>' : ''}</td><td>${esc(x.name)}</td><td class="r">${x.price ? gbp(x.price) : '–'}</td><td class="r">${nz(x.stock, '–')}</td><td>${x.vat || '?'}</td></tr>`; }).join('');
+        return `<tr><td>${esc(x.raw)}${x.sci ? ' <span class="tag red">broken by Excel</span>' : ''}</td><td>${esc(x.name)}</td><td class="r">${x.price ? gbp(x.price) : '–'}</td><td class="r">${nz(x.stock, '–')}</td></tr>`; }).join('');
   };
   b.addEventListener('change', preview); preview();
   b.onclick = async ev => {
@@ -1126,19 +1372,17 @@ $('#pImportFile').onchange = async e => {
       const old = existing.get(x.bc);
       if (old) {
         if (!upd) { skipped++; continue; }
-        if (x.vat) old.vat = x.vat;
         if (x.price) old.price = x.price;
         if (x.stock != null) old.stock = x.stock;
         old.updated = now; st.put(old); updated++;
       } else {
-        const vat = x.vat || 'S';
-        st.put({ barcode: x.bc, name: x.name, price: x.price || 0, vat, stock: x.stock, age: guessAge(x.name), pmp: /\bpmp\b|price.?marked/i.test(x.name), quick: false, open: false, updated: now });
+        st.put({ barcode: x.bc, name: x.name, price: x.price || 0, stock: x.stock, age: guessAge(x.name), pmp: /\bpmp\b|price.?marked/i.test(x.name), quick: false, open: false, updated: now });
         existing.set(x.bc, true); added++;
       }
     }
     await txDone(tx);
     closeModal(); await loadProducts(); await refreshQuick();
-    await ask(`Added <b>${added}</b> new products and updated <b>${updated}</b>.${skipped ? `<br>${skipped} rows skipped (no valid barcode or name).` : ''}${broken ? `<br><span style="color:var(--bad)">${broken} barcodes were damaged by Excel (e.g. 5.01E+12). Format that column as Number with 0 decimals and save the CSV again.</span>` : ''}<br><br>Items that look like alcohol, tobacco, vapes or knives were marked 18+ automatically. Please check them (Filter: "Age restricted") and check VAT rates.`, { title: 'Import finished', yes: 'OK', no: '' });
+    await ask(`Added <b>${added}</b> new products and updated <b>${updated}</b>.${skipped ? `<br>${skipped} rows skipped (no valid barcode or name).` : ''}${broken ? `<br><span style="color:var(--bad)">${broken} barcodes were damaged by Excel (e.g. 5.01E+12). Format that column as Number with 0 decimals and save the CSV again.</span>` : ''}<br><br>Items that look like alcohol, tobacco, vapes or knives were marked 18+ automatically. Please check them (Filter: "Age restricted").`, { title: 'Import finished', yes: 'OK', no: '' });
   };
 };
 
@@ -1149,16 +1393,16 @@ let lastReport = null;
 async function runReport() {
   const from = $('#rFrom').value, to = $('#rTo').value; if (!from || !to) return;
   const sales = await salesBetween(from, to);
-  const r = { from, to, count: 0, gross: 0, refunds: 0, refundCount: 0, cash: 0, card: 0, items: {}, lines: [] };
+  const r = { from, to, count: 0, gross: 0, refunds: 0, refundCount: 0, cash: 0, card: 0, items: {} };
   for (const s of sales) {
     if (s.refund) { r.refundCount++; r.refunds += s.total; } else { r.count++; r.gross += s.total; }
     r[s.method] += s.total;
-    for (const it of s.items) { r.lines.push(it); const k = it.barcode + '|' + it.name; r.items[k] = r.items[k] || { name: it.name, qty: 0, value: 0 }; r.items[k].qty += it.qty; r.items[k].value += it.qty * it.unit; }
+    for (const it of s.items) { const k = it.barcode + '|' + it.name; r.items[k] = r.items[k] || { name: it.name, qty: 0, value: 0 }; r.items[k].qty += it.qty; r.items[k].value += it.qty * it.unit; }
   }
-  r.net = r.gross + r.refunds; r.vat = vatSummary(r.lines); r.sales = sales;
+  r.net = r.gross + r.refunds; r.sales = sales;
+  r.noSales = (await req(os('drawer').getAll())).filter(d => d.ts >= dayStart(from) && d.ts < dayStart(to) + 86400000).length;
   r.top = Object.values(r.items).sort((a, b) => b.value - a.value).slice(0, 15);
   lastReport = r;
-  const totalVat = r.vat.reduce((s, v) => s + v.vat, 0);
   $('#rOut').innerHTML = `
     <div class="stats">
       <div class="stat"><span>Net takings</span><b>${gbp(r.net)}</b></div>
@@ -1166,12 +1410,9 @@ async function runReport() {
       <div class="stat"><span>Refunds (${r.refundCount})</span><b>${gbp(r.refunds)}</b></div>
       <div class="stat"><span>Cash (should be in drawer)</span><b>${gbp(r.cash)}</b></div>
       <div class="stat"><span>Card</span><b>${gbp(r.card)}</b></div>
+      <div class="stat"><span>Drawer opened, no sale</span><b>${r.noSales}</b></div>
       <div class="stat"><span>Average basket</span><b>${gbp(r.count ? Math.round(r.gross / r.count) : 0)}</b></div>
     </div>
-    <h3>VAT</h3>
-    <table class="tbl"><thead><tr><th>Rate</th><th class="r">Gross</th><th class="r">Net</th><th class="r">VAT</th></tr></thead><tbody>
-      ${r.vat.map(v => `<tr><td>${VAT[v.code].label}</td><td class="r">${gbp(v.gross)}</td><td class="r">${gbp(v.net)}</td><td class="r">${gbp(v.vat)}</td></tr>`).join('')}
-      <tr><td><b>Total</b></td><td class="r"><b>${gbp(r.net)}</b></td><td class="r"><b>${gbp(r.net - totalVat)}</b></td><td class="r"><b>${gbp(totalVat)}</b></td></tr></tbody></table>
     <h3>Best sellers</h3>
     <table class="tbl"><thead><tr><th>Product</th><th class="r">Qty</th><th class="r">Value</th></tr></thead><tbody>
       ${r.top.map(t => `<tr><td>${esc(t.name)}</td><td class="r">${t.qty}</td><td class="r">${gbp(t.value)}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">No sales in this period</td></tr>'}</tbody></table>`;
@@ -1180,8 +1421,7 @@ function printReport() {
   const r = lastReport; if (!r) return;
   printHtml(`<div class="c big">${esc(cfg.shopName)}</div><div class="c">SALES REPORT</div><div class="c">${r.from === r.to ? r.from : r.from + ' to ' + r.to}</div><div class="c">Printed ${dt(Date.now())}</div><hr>
     <table><tr><td>Sales (${r.count})</td><td class="r">${gbp(r.gross)}</td></tr><tr><td>Refunds (${r.refundCount})</td><td class="r">${gbp(r.refunds)}</td></tr>
-    <tr class="big"><td>NET</td><td class="r">${gbp(r.net)}</td></tr><tr><td>Cash</td><td class="r">${gbp(r.cash)}</td></tr><tr><td>Card</td><td class="r">${gbp(r.card)}</td></tr></table><hr>
-    <table><tr><td>VAT</td><td class="r">Gross</td><td class="r">VAT</td></tr>${r.vat.map(v => `<tr><td>${v.code}</td><td class="r">${gbp(v.gross)}</td><td class="r">${gbp(v.vat)}</td></tr>`).join('')}</table><hr>
+    <tr class="big"><td>NET</td><td class="r">${gbp(r.net)}</td></tr><tr><td>Cash</td><td class="r">${gbp(r.cash)}</td></tr><tr><td>Card</td><td class="r">${gbp(r.card)}</td></tr><tr><td>No sale (drawer)</td><td class="r">${r.noSales}</td></tr></table><hr>
     <div>Counted cash: ____________</div><br><div>Signed: ____________</div><br>`);
 }
 function setToday() { const t = ymd(new Date()); $('#rFrom').value = t; $('#rTo').value = t; runReport(); }
@@ -1191,8 +1431,8 @@ $('#rPrint').onclick = printReport;
 $('#rCsv').onclick = async () => {
   await runReport(); const r = lastReport; if (!r) return;
   const q = v => `"${String(v).replace(/"/g, '""')}"`;
-  const out = [['Date', 'Time', 'Receipt', 'Type', 'Payment', 'Barcode', 'Product', 'Qty', 'Unit price', 'Line total', 'VAT code'].join(',')];
-  for (const s of r.sales) { const d = new Date(s.ts); for (const it of s.items) out.push([ymd(d), `${pad(d.getHours())}:${pad(d.getMinutes())}`, s.id, s.refund ? 'Refund' : 'Sale', s.method, q(it.barcode), q(it.name), it.qty, (it.unit / 100).toFixed(2), (it.qty * it.unit / 100).toFixed(2), it.vat].join(',')); }
+  const out = [['Date', 'Time', 'Receipt', 'Type', 'Payment', 'Barcode', 'Product', 'Qty', 'Unit price', 'Line total'].join(',')];
+  for (const s of r.sales) { const d = new Date(s.ts); for (const it of s.items) out.push([ymd(d), `${pad(d.getHours())}:${pad(d.getMinutes())}`, s.id, s.refund ? 'Refund' : 'Sale', s.method, q(it.barcode), q(it.name), it.qty, (it.unit / 100).toFixed(2), (it.qty * it.unit / 100).toFixed(2)].join(',')); }
   download(`sales-${r.from}_to_${r.to}.csv`, out.join('\r\n'), 'text/csv');
 };
 $('#rEod').onclick = async () => { setToday(); await runReport(); printReport(); setTimeout(() => backupNow(true), 800); };
@@ -1216,7 +1456,7 @@ function download(name, text, type = 'application/json') {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
 }
-async function backupData() { return JSON.stringify({ app: 'shoptill', version: 1, exported: new Date().toISOString(), cfg, products: await dbAll('products'), sales: await dbAll('sales'), stockins: await dbAll('stockins') }); }
+async function backupData() { return JSON.stringify({ app: 'shoptill', version: 1, exported: new Date().toISOString(), cfg, products: await dbAll('products'), sales: await dbAll('sales'), stockins: await dbAll('stockins'), drawer: await dbAll('drawer') }); }
 async function writeToFolder(interactive) {
   const h = await dbGet('handles', 'backupDir'); if (!h) return false;
   try {
@@ -1244,10 +1484,31 @@ async function showBackupInfo() {
   const h = await dbGet('handles', 'backupDir');
   $('#bInfo').textContent = `Backup folder: ${h ? h.name : 'not chosen (backups go to Downloads)'} · Last backup: ${cfg.lastBackup ? dt(cfg.lastBackup) : 'never'}`;
   const days = cfg.lastBackup ? (Date.now() - cfg.lastBackup) / 86400000 : Infinity;
-  const w = $('#backupWarn');
+  const w = $('#bWarn');
   w.hidden = days < 2;
-  w.textContent = cfg.lastBackup ? `Last backup was ${Math.floor(days)} days ago. Go to Settings → Back up now.` : 'No backup yet. Go to Settings → Back up now (ideally to a USB stick).';
+  w.textContent = cfg.lastBackup ? `⚠ Your last backup was ${Math.floor(days)} days ago. Tap "Back up now".` : '⚠ No backup yet. Tap "Back up now", ideally to a USB stick or cloud drive.';
 }
+// dark mode: saved on this device only
+function setTheme(dark) {
+  if (dark) document.documentElement.setAttribute('data-theme', 'dark'); else document.documentElement.removeAttribute('data-theme');
+  $('#themeBtn').textContent = dark ? '☀️' : '🌙';
+  try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
+  $('#dDark').checked = dark;
+}
+$('#themeBtn').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+$('#themeBtn').onclick = () => setTheme(document.documentElement.getAttribute('data-theme') !== 'dark');
+// Settings -> Display: bold text / strong outlines, applied straight away and saved per device
+function setDisplay(key, on) {
+  if (on) document.documentElement.setAttribute('data-' + key, ''); else document.documentElement.removeAttribute('data-' + key);
+  try { localStorage.setItem(key, on ? '1' : '0'); } catch (e) {}
+}
+const root = document.documentElement;
+$('#dBold').checked = root.hasAttribute('data-bold');
+$('#dOutline').checked = root.hasAttribute('data-outline');
+$('#dDark').checked = root.getAttribute('data-theme') === 'dark';
+$('#dBold').onchange = e => setDisplay('bold', e.target.checked);
+$('#dOutline').onchange = e => setDisplay('outline', e.target.checked);
+$('#dDark').onchange = e => setTheme(e.target.checked);
 $('#bFolder').onclick = async () => {
   if (!window.showDirectoryPicker) return toast('This browser cannot pick folders. Backups will go to Downloads.');
   try { const h = await window.showDirectoryPicker({ mode: 'readwrite' }); await dbPut('handles', h, 'backupDir'); await backupNow(true); } catch (e) {}
@@ -1259,17 +1520,18 @@ $('#bRestoreFile').onchange = async e => {
   let j; try { j = JSON.parse(await file.text()); } catch (err) { return toast('That is not a valid backup file'); }
   if (j.app !== 'shoptill') return toast('That is not a Shop Till backup file');
   if (!(await ask(`Replace <b>all</b> current products and sales with the backup from <b>${dt(j.exported)}</b> (${j.products.length} products, ${j.sales.length} sales)?`, { title: 'Restore backup', yes: 'Replace everything', danger: true }))) return;
-  const tx = db.transaction(['products', 'sales', 'stockins', 'settings'], 'readwrite');
-  tx.objectStore('products').clear(); tx.objectStore('sales').clear(); tx.objectStore('stockins').clear();
+  const tx = db.transaction(['products', 'sales', 'stockins', 'drawer', 'settings'], 'readwrite');
+  tx.objectStore('products').clear(); tx.objectStore('sales').clear(); tx.objectStore('stockins').clear(); tx.objectStore('drawer').clear();
   j.products.forEach(p => tx.objectStore('products').put(p)); j.sales.forEach(s => tx.objectStore('sales').put(s));
   (j.stockins || []).forEach(s => tx.objectStore('stockins').put(s));
+  (j.drawer || []).forEach(s => tx.objectStore('drawer').put(s));
   tx.objectStore('settings').put(Object.assign({}, DEFAULT_CFG, j.cfg, { seeded: true }), 'cfg');
   await txDone(tx); location.reload();
 };
 
 // ---------- settings ----------
-function fillSettings() { $('#sName').value = cfg.shopName; $('#sAddr').value = cfg.address; $('#sVat').value = cfg.vatNo; $('#sFooter').value = cfg.footer; $('#sAutoPrint').checked = cfg.autoPrint; $('#sPaper').value = cfg.paper || '80'; $('#sTextSize').value = cfg.textSize || 'large'; $('#sBold').checked = cfg.boldPrint !== false; showBackupInfo(); }
-const readSettings = () => Object.assign(cfg, { shopName: $('#sName').value.trim() || 'My Shop', address: $('#sAddr').value.trim(), vatNo: $('#sVat').value.trim(), footer: $('#sFooter').value.trim(), autoPrint: $('#sAutoPrint').checked, paper: $('#sPaper').value, textSize: $('#sTextSize').value, boldPrint: $('#sBold').checked });
+function fillSettings() { $('#sName').value = cfg.shopName; $('#sAddr').value = cfg.address; $('#sFooter').value = cfg.footer; $('#sPrintMode').value = cfg.printMode || 'off'; $('#sPaper').value = cfg.paper || '80'; $('#sTextSize').value = cfg.textSize || 'large'; $('#sBold').checked = cfg.boldPrint !== false; $('#sDrawer').checked = !!cfg.drawer; checkDrawer(); showBackupInfo(); }
+const readSettings = () => Object.assign(cfg, { shopName: $('#sName').value.trim() || 'My Shop', address: $('#sAddr').value.trim(), footer: $('#sFooter').value.trim(), printMode: $('#sPrintMode').value, paper: $('#sPaper').value, textSize: $('#sTextSize').value, boldPrint: $('#sBold').checked });
 $('#sSave').onclick = async () => { readSettings(); await saveCfg(); toast('Settings saved'); };
 $('#sTest').onclick = async () => { readSettings(); await saveCfg(); printTest(); };
 
@@ -1299,7 +1561,7 @@ window.addEventListener('online', tick); window.addEventListener('offline', tick
   try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) {}
   await openDB(); await loadCfg(); await seed();
   $('#shopName').textContent = cfg.shopName;
-  await refreshQuick(); renderBasket(); tick(); setInterval(tick, 15000); showBackupInfo();
+  await refreshQuick(); renderBasket(); tick(); setInterval(tick, 15000); showBackupInfo(); showDrawerButton();
   focusScanner();
 })();
 
@@ -1312,7 +1574,7 @@ window.addEventListener('online', tick); window.addEventListener('offline', tick
 
 // offline support when served from a web address (e.g. installed on an iPad home screen)
 // When a new version arrives, reload once - but never in the middle of a sale or delivery.
-const APP_VERSION = '8';
+const APP_VERSION = '9';
 $('#appVer').textContent = APP_VERSION;
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   const hadController = !!navigator.serviceWorker.controller;
