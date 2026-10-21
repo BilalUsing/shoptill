@@ -182,17 +182,18 @@ body.refund .total-box{background:var(--bad)}
 .nogap #view-till>*,.nogap #view-stock>*{margin-right:12px}
 .nogap .page>*{margin-bottom:12px}
 @media print{
-  @page{size:80mm auto;margin:3mm}
   body{display:block;overflow:visible;background:#fff}
   body>*:not(#print){display:none!important}
-  #print{display:block;font:12px/1.3 "Consolas","Courier New",monospace;color:#000;width:72mm}
+  /* size, weight and width come from Settings -> Receipt printer (see printHtml) */
+  #print{display:block;font-family:"Consolas","Courier New",monospace;font-size:var(--rfs,16px);line-height:1.3;font-weight:var(--rfw,700);color:#000;width:var(--rw,72mm)}
   #print .c{text-align:center}#print .r{text-align:right}
   #print table{width:100%;border-collapse:collapse}
   #print td{padding:1px 0;vertical-align:top}
   #print hr{border:0;border-top:1px dashed #000;margin:4px 0}
-  #print .big{font-size:16px;font-weight:700}
+  #print .big{font-size:1.3em;font-weight:700}
 }
 </style>
+<style id="pageCss">@media print{@page{size:80mm auto;margin:3mm}}</style>
 </head>
 <body>
 <header>
@@ -286,8 +287,11 @@ body.refund .total-box{background:var(--bad)}
       <label>VAT number (optional)<input id="sVat"></label>
       <label class="wide">Receipt footer<input id="sFooter"></label>
       <label class="chk wide"><input type="checkbox" id="sAutoPrint"> Print a receipt automatically after every sale</label>
+      <label>Receipt paper width<select id="sPaper"><option value="80">80 mm (most common)</option><option value="58">58 mm (narrow)</option></select></label>
+      <label>Receipt text size<select id="sTextSize"><option value="normal">Normal</option><option value="large">Large</option><option value="xl">Extra large</option></select></label>
+      <label class="chk wide"><input type="checkbox" id="sBold"> Bold receipt text (easier to read on thermal printers)</label>
     </div>
-    <div class="actions"><button class="btn primary" id="sSave">Save settings</button></div>
+    <div class="actions"><button class="btn" id="sTest">Save &amp; print test receipt</button><button class="btn primary" id="sSave">Save settings</button></div>
   </div>
   <div class="card">
     <h2>Backups</h2>
@@ -369,7 +373,7 @@ const dbAll = (s, q) => req(os(s).getAll(q));
 const txDone = tx => new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = tx.onabort = () => rej(tx.error); });
 
 let cfg = {};
-const DEFAULT_CFG = { shopName: 'My Shop', address: '', vatNo: '', footer: 'Thank you for shopping with us!', autoPrint: false, lastBackup: null, lastAutoBackup: 0, seeded: false };
+const DEFAULT_CFG = { shopName: 'My Shop', address: '', vatNo: '', footer: 'Thank you for shopping with us!', autoPrint: false, paper: '80', textSize: 'large', boldPrint: true, lastBackup: null, lastAutoBackup: 0, seeded: false };
 async function loadCfg() { cfg = Object.assign({}, DEFAULT_CFG, (await dbGet('settings', 'cfg')) || {}); }
 async function saveCfg() { await dbPut('settings', cfg, 'cfg'); $('#shopName').textContent = cfg.shopName; }
 
@@ -501,9 +505,15 @@ if (IOS) {
 // ---------- camera barcode scanning ----------
 // Android Chrome: built-in BarcodeDetector. iPhone/iPad: ZXing (open source), reading only the green box area.
 const ZXING_URL = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+const ZXING_SRI = 'sha384-BzBxP10ZE72aitqj5UMmUsbKFliP/DZqA8Wq+BNNhlIJDGoEd1tpkMYXOg9+n6sB';
 function loadZXing() {
   if (window.ZXing) return Promise.resolve();
-  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = ZXING_URL; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    // integrity check: the browser refuses to run the file if it has been altered in any way
+    s.integrity = ZXING_SRI; s.crossOrigin = 'anonymous';
+    s.src = ZXING_URL; s.onload = res; s.onerror = rej; document.head.appendChild(s);
+  });
 }
 const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
@@ -813,7 +823,23 @@ function vatSummary(items) {
   for (const it of items) by[it.vat] = (by[it.vat] || 0) + it.qty * it.unit;
   return Object.entries(by).map(([code, gross]) => ({ code, gross, vat: vatOf(gross, code), net: gross - vatOf(gross, code) }));
 }
-function printHtml(html) { $('#print').innerHTML = html; setTimeout(() => window.print(), 50); }
+const RECEIPT_SIZES = { normal: 13, large: 16, xl: 19 };
+function printHtml(html) {
+  const paper = cfg.paper === '58' ? 58 : 80, area = paper === 58 ? 48 : 72;
+  const p = $('#print');
+  p.style.setProperty('--rfs', (RECEIPT_SIZES[cfg.textSize] || 16) + 'px');
+  p.style.setProperty('--rw', area + 'mm');
+  p.style.setProperty('--rfw', cfg.boldPrint === false ? '400' : '700');
+  $('#pageCss').textContent = `@media print{@page{size:${paper}mm auto;margin:${paper === 58 ? 2 : 3}mm}}`;
+  p.innerHTML = html;
+  setTimeout(() => window.print(), 50);
+}
+function printTest() {
+  printHtml(`<div class="c big">${esc(cfg.shopName)}</div><div class="c">TEST RECEIPT</div><hr>
+    <table><tr><td>2 x Coca-Cola 330ml</td><td class="r">£1.98 S</td></tr><tr><td>Mars 51g</td><td class="r">£0.85 S</td></tr></table><hr>
+    <table><tr class="big"><td>TOTAL</td><td class="r">£2.83</td></tr></table><hr>
+    <div class="c">Paper ${cfg.paper === '58' ? 58 : 80} mm · text ${cfg.textSize || 'large'}${cfg.boldPrint === false ? '' : ' · bold'}</div><br>`);
+}
 function printReceipt(s) {
   const rows = s.items.map(it => `<tr><td>${Math.abs(it.qty) > 1 ? Math.abs(it.qty) + ' x ' : ''}${esc(it.name)}</td><td class="r">${gbp(it.qty * it.unit)} ${it.vat}</td></tr>`).join('');
   const vs = vatSummary(s.items).filter(v => v.gross).map(v => `<tr><td>${v.code} ${VAT[v.code].label}</td><td class="r">${gbp(v.net)}</td><td class="r">${gbp(v.vat)}</td></tr>`).join('');
@@ -1242,11 +1268,10 @@ $('#bRestoreFile').onchange = async e => {
 };
 
 // ---------- settings ----------
-function fillSettings() { $('#sName').value = cfg.shopName; $('#sAddr').value = cfg.address; $('#sVat').value = cfg.vatNo; $('#sFooter').value = cfg.footer; $('#sAutoPrint').checked = cfg.autoPrint; showBackupInfo(); }
-$('#sSave').onclick = async () => {
-  Object.assign(cfg, { shopName: $('#sName').value.trim() || 'My Shop', address: $('#sAddr').value.trim(), vatNo: $('#sVat').value.trim(), footer: $('#sFooter').value.trim(), autoPrint: $('#sAutoPrint').checked });
-  await saveCfg(); toast('Settings saved');
-};
+function fillSettings() { $('#sName').value = cfg.shopName; $('#sAddr').value = cfg.address; $('#sVat').value = cfg.vatNo; $('#sFooter').value = cfg.footer; $('#sAutoPrint').checked = cfg.autoPrint; $('#sPaper').value = cfg.paper || '80'; $('#sTextSize').value = cfg.textSize || 'large'; $('#sBold').checked = cfg.boldPrint !== false; showBackupInfo(); }
+const readSettings = () => Object.assign(cfg, { shopName: $('#sName').value.trim() || 'My Shop', address: $('#sAddr').value.trim(), vatNo: $('#sVat').value.trim(), footer: $('#sFooter').value.trim(), autoPrint: $('#sAutoPrint').checked, paper: $('#sPaper').value, textSize: $('#sTextSize').value, boldPrint: $('#sBold').checked });
+$('#sSave').onclick = async () => { readSettings(); await saveCfg(); toast('Settings saved'); };
+$('#sTest').onclick = async () => { readSettings(); await saveCfg(); printTest(); };
 
 // ---------- navigation ----------
 let view = 'till';
@@ -1287,7 +1312,7 @@ window.addEventListener('online', tick); window.addEventListener('offline', tick
 
 // offline support when served from a web address (e.g. installed on an iPad home screen)
 // When a new version arrives, reload once - but never in the middle of a sale or delivery.
-const APP_VERSION = '7';
+const APP_VERSION = '8';
 $('#appVer').textContent = APP_VERSION;
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   const hadController = !!navigator.serviceWorker.controller;
