@@ -450,6 +450,20 @@ body.refund .total-box{background:var(--bad)}
     <div class="actions"><span class="muted" id="drawerStatus" style="align-self:center"></span><span class="spacer"></span><button class="btn" id="sDrawerTest">Test drawer</button></div>
   </div>
   <div class="card">
+    <h2>Product names <span class="muted" style="font-size:15px">(this device)</span></h2>
+    <p>When you scan a barcode the till doesn't know, it fills in the name from the offline product list stored on this device - no internet needed.</p>
+    <p class="muted" id="catInfo"></p>
+    <div class="form">
+      <label class="chk wide"><input type="checkbox" id="sOnline"> <span><b>Also look up unknown barcodes online</b> (Open Food Facts) when this device has internet</span></label>
+    </div>
+    <div class="toolbar">
+      <button class="btn" id="catLoad">Load product names file…</button>
+      <button class="btn danger" id="catClear">Remove product names</button>
+      <input type="file" id="catFile" accept=".tsv,.txt,.gz" hidden>
+    </div>
+    <p class="muted" id="catProgress"></p>
+  </div>
+  <div class="card">
     <h2>Backups</h2>
     <div class="bwarn" id="bWarn" hidden></div>
     <p class="muted" id="bInfo"></p>
@@ -463,7 +477,8 @@ body.refund .total-box{background:var(--bad)}
   </div>
   <div class="card">
     <h2>About</h2>
-    <p class="muted">Shop Till works offline. When the PC is online, unknown barcodes are looked up on Open Food Facts (a free product database) to fill in the name. Prices always come from you or your price file.</p>
+    <p class="muted">Shop Till works fully offline. Product names come from your own products, the offline product list and (only if you allow it) Open Food Facts online. Prices always come from you or your price file.</p>
+    <p class="muted">Offline product list: data from <b>Open Food Facts</b> (openfoodfacts.org), available under the Open Database License (ODbL). Camera barcode reading: ZXing (Apache License 2.0).</p>
     <p class="muted">Version <b id="appVer"></b></p>
   </div>
 </section>
@@ -504,7 +519,7 @@ const guessAge = (...txt) => { const t = txt.join(' '); return AGE18.test(t) && 
 let db;
 function openDB() {
   return new Promise((res, rej) => {
-    const r = indexedDB.open('shoptill', 3);
+    const r = indexedDB.open('shoptill', 4);
     r.onupgradeneeded = e => {
       const d = r.result;
       if (e.oldVersion < 1) {
@@ -515,6 +530,7 @@ function openDB() {
       }
       if (e.oldVersion < 2) d.createObjectStore('stockins', { keyPath: 'id', autoIncrement: true });
       if (e.oldVersion < 3) d.createObjectStore('drawer', { keyPath: 'id', autoIncrement: true }); // "no sale" drawer openings
+      if (e.oldVersion < 4) d.createObjectStore('catalog', { keyPath: 'b' }); // offline product names: { b: barcode, n: name }
     };
     r.onsuccess = () => res(db = r.result);
     r.onerror = () => rej(r.error);
@@ -529,7 +545,9 @@ const dbAll = (s, q) => req(os(s).getAll(q));
 const txDone = tx => new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = tx.onabort = () => rej(tx.error); });
 
 let cfg = {};
-const DEFAULT_CFG = { shopName: 'My Shop', address: '', footer: 'Thank you for shopping with us!', printMode: 'off', drawer: false, paper: '80', textSize: 'large', boldPrint: true, lastBackup: null, lastAutoBackup: 0, seeded: false };
+const DEFAULT_CFG = { shopName: 'My Shop', address: '', footer: 'Thank you for shopping with us!', printMode: 'off', drawer: false,
+  // the Windows till (opened from the PC's files) never goes online unless switched on in Settings
+  onlineLookup: location.protocol !== 'file:', paper: '80', textSize: 'large', boldPrint: true, lastBackup: null, lastAutoBackup: 0, seeded: false };
 async function loadCfg() {
   const saved = (await dbGet('settings', 'cfg')) || {};
   cfg = Object.assign({}, DEFAULT_CFG, saved);
@@ -566,7 +584,16 @@ async function findProduct(code) {
   return p || null;
 }
 
-// ---------- Open Food Facts lookup (only when online) ----------
+// ---------- product names for unknown barcodes ----------
+// 1st: the offline product list on this device. 2nd (only if allowed in Settings): Open Food Facts online.
+async function lookupName(code) {
+  const tries = [code];
+  if (/^\d{12}$/.test(code)) tries.push('0' + code);     // UPC-A vs EAN-13
+  if (/^0\d{12}$/.test(code)) tries.push(code.slice(1));
+  for (const c of tries) { const r = await dbGet('catalog', c); if (r) return { status: 'found', name: r.n, source: 'offline' }; }
+  if (!cfg.onlineLookup) return { status: 'notfound', source: 'offline' };
+  const r = await lookupOFF(code); r.source = 'online'; return r;
+}
 async function lookupOFF(code) {
   if (!navigator.onLine) return { status: 'offline' };
   const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 6000);
@@ -685,7 +712,7 @@ if (IOS) {
 
 // ---------- camera barcode scanning ----------
 // Android Chrome: built-in BarcodeDetector. iPhone/iPad: ZXing (open source), reading only the green box area.
-const ZXING_URL = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+const ZXING_URL = 'zxing.min.js'; // part of the app's own files (ZXing 0.21.3) - nothing downloaded from other websites
 const ZXING_SRI = 'sha384-BzBxP10ZE72aitqj5UMmUsbKFliP/DZqA8Wq+BNNhlIJDGoEd1tpkMYXOg9+n6sB';
 function loadZXing() {
   if (window.ZXing) return Promise.resolve();
@@ -1040,6 +1067,53 @@ async function checkDrawer() {
   $('#drawerStatus').textContent = r.ok ? `Ready - printer: ${r.printer || 'none set as default'}` : '✖ Drawer helper not running - start the till with "Start Till.bat"';
 }
 
+// ---------- offline product names (loaded from a file, kept on this device) ----------
+// File format: one product per line, "barcode<TAB>name". Plain .tsv or gzip-compressed .tsv.gz.
+async function readTextFile(file) {
+  if (/\.gz$/i.test(file.name)) {
+    if (typeof DecompressionStream !== 'function') throw new Error('this device cannot open .gz files - use the .tsv version');
+    return new Response(file.stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  }
+  return file.text();
+}
+async function showCatInfo() {
+  const n = await req(os('catalog').count()), c = cfg.catalog;
+  $('#catInfo').textContent = n ? `Offline product list: ${n.toLocaleString('en-GB')} products${c ? ` (loaded ${dt(c.loaded)} from ${c.file})` : ''}.` : 'No offline product list on this device yet - tap "Load product names file…".';
+  $('#catClear').hidden = !n;
+  $('#sOnline').checked = !!cfg.onlineLookup;
+}
+$('#sOnline').onchange = async e => { cfg.onlineLookup = e.target.checked; await saveCfg(); };
+$('#catLoad').onclick = () => $('#catFile').click();
+$('#catFile').onchange = async e => {
+  const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+  const prog = $('#catProgress');
+  try {
+    prog.textContent = 'Reading file…';
+    const text = await readTextFile(file), rows = [];
+    for (const line of text.split('\n')) {
+      const t = line.indexOf('\t'); if (t < 6) continue;
+      const b = line.slice(0, t).trim(), n = line.slice(t + 1).trim();
+      if (/^\d{6,14}$/.test(b) && n) rows.push({ b, n: n.slice(0, 120) });
+    }
+    if (!rows.length) { prog.textContent = '✖ That file has no product names in it.'; return; }
+    const clear = db.transaction('catalog', 'readwrite'); clear.objectStore('catalog').clear(); await txDone(clear);
+    for (let i = 0; i < rows.length; i += 5000) {
+      const tx = db.transaction('catalog', 'readwrite'), st = tx.objectStore('catalog');
+      for (let j = i; j < Math.min(i + 5000, rows.length); j++) st.put(rows[j]);
+      await txDone(tx);
+      prog.textContent = `Loading… ${Math.min(i + 5000, rows.length).toLocaleString('en-GB')} of ${rows.length.toLocaleString('en-GB')}`;
+    }
+    cfg.catalog = { loaded: Date.now(), file: file.name }; await saveCfg();
+    prog.textContent = `✔ Loaded ${rows.length.toLocaleString('en-GB')} product names.`;
+    showCatInfo();
+  } catch (err) { prog.textContent = '✖ Could not load that file: ' + err.message; }
+};
+$('#catClear').onclick = async () => {
+  if (!(await ask('Remove the offline product list from this device?<br><br>Your own products and prices are not affected.', { yes: 'Remove', danger: true }))) return;
+  const tx = db.transaction('catalog', 'readwrite'); tx.objectStore('catalog').clear(); await txDone(tx);
+  cfg.catalog = null; await saveCfg(); $('#catProgress').textContent = ''; showCatInfo();
+};
+
 $('#payCash').onclick = async () => {
   if (!basket.length) return toast('Basket is empty');
   const total = basketTotal();
@@ -1149,14 +1223,15 @@ function openProductEditor(code, { fromTill = false } = {}) {
     f('fAge').value = String(p.age || 0); f('fPmp').checked = !!p.pmp; f('fOpen').checked = !!p.open; f('fQuick').checked = !!p.quick;
 
     if (isNew && code) {
-      lookupOFF(code).then(r => {
+      lookupName(code).then(r => {
         const st = f('offStatus'); if (!st) return;
         if (r.status === 'found') {
           if (!f('fName').value) f('fName').value = r.name;
           if (guessAge(r.name, r.categories, r.allCats)) f('fAge').value = '18';
-          st.innerHTML = `Found on Open Food Facts${r.categories ? ` (<i>${esc(r.categories)}</i>)` : ''}. Check the name and add your price.`;
+          st.innerHTML = `Found in ${r.source === 'offline' ? 'the offline product list' : 'Open Food Facts'}${r.categories ? ` (<i>${esc(r.categories)}</i>)` : ''}. Check the name and add your price.`;
         } else {
-          st.textContent = r.status === 'offline' ? 'Offline. Please type the product name.' : 'Not found online. Please type the product name.';
+          st.textContent = r.source === 'offline' ? 'Not in the offline product list. Please type the product name.'
+            : r.status === 'offline' ? 'Not in the offline list and no internet. Please type the product name.' : 'Not found. Please type the product name.';
           f('fName').focus();
         }
       });
@@ -1530,7 +1605,7 @@ $('#bRestoreFile').onchange = async e => {
 };
 
 // ---------- settings ----------
-function fillSettings() { $('#sName').value = cfg.shopName; $('#sAddr').value = cfg.address; $('#sFooter').value = cfg.footer; $('#sPrintMode').value = cfg.printMode || 'off'; $('#sPaper').value = cfg.paper || '80'; $('#sTextSize').value = cfg.textSize || 'large'; $('#sBold').checked = cfg.boldPrint !== false; $('#sDrawer').checked = !!cfg.drawer; checkDrawer(); showBackupInfo(); }
+function fillSettings() { $('#sName').value = cfg.shopName; $('#sAddr').value = cfg.address; $('#sFooter').value = cfg.footer; $('#sPrintMode').value = cfg.printMode || 'off'; $('#sPaper').value = cfg.paper || '80'; $('#sTextSize').value = cfg.textSize || 'large'; $('#sBold').checked = cfg.boldPrint !== false; $('#sDrawer').checked = !!cfg.drawer; checkDrawer(); showCatInfo(); showBackupInfo(); }
 const readSettings = () => Object.assign(cfg, { shopName: $('#sName').value.trim() || 'My Shop', address: $('#sAddr').value.trim(), footer: $('#sFooter').value.trim(), printMode: $('#sPrintMode').value, paper: $('#sPaper').value, textSize: $('#sTextSize').value, boldPrint: $('#sBold').checked });
 $('#sSave').onclick = async () => { readSettings(); await saveCfg(); toast('Settings saved'); };
 $('#sTest').onclick = async () => { readSettings(); await saveCfg(); printTest(); };
@@ -1574,7 +1649,7 @@ window.addEventListener('online', tick); window.addEventListener('offline', tick
 
 // offline support when served from a web address (e.g. installed on an iPad home screen)
 // When a new version arrives, reload once - but never in the middle of a sale or delivery.
-const APP_VERSION = '9';
+const APP_VERSION = '10';
 $('#appVer').textContent = APP_VERSION;
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   const hadController = !!navigator.serviceWorker.controller;

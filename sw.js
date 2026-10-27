@@ -1,12 +1,12 @@
 // Keeps Shop Till working offline. Bump VERSION (and APP_VERSION in index.html) when you upload a new index.html.
-const VERSION = 'shoptill-v9';
+const VERSION = 'shoptill-v10';
 const FILES = [
   './',
   './index.html',
   './manifest.webmanifest',
   './icon-180.png',
   './icon-512.png',
-  'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js',
+  './zxing.min.js', // camera barcode reader - part of the app's own files
 ];
 
 self.addEventListener('install', e => {
